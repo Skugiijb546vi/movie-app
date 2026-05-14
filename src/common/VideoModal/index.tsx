@@ -131,9 +131,10 @@ const VideoModal = () => {
   const isVip = fbData?.badge_text === "VIP";
   const canPlayVideo = !isVip || isVipVerified;
   
-  // فێڵەکە ڕێک لێرەدایە! پاشگرێکی mp4 دەخەینە کۆتایی لینکەکەوە بۆ هەڵخەڵەتاندنی براوزەر
+  // فێڵە سەرەکییەکە ڕێک لێرەدایە کە پێشتر بەکارمان هێنا!
   const rawUrl = fbData?.url || fbData?.video_url || "";
-  const videoUrl = rawUrl ? `${rawUrl}#.mp4` : ""; 
+  // زیادکردنی بڕگەی ?download=true بۆ ئەوەی Hugging Face نەتوانێت بلۆکی بکات
+  const videoUrl = rawUrl ? `${rawUrl}?download=true#.mp4` : ""; 
   
   const posterImage = fbData?.image || movieData?.poster_path || "";
 
@@ -175,7 +176,6 @@ const VideoModal = () => {
                 className="w-full h-full bg-black object-contain outline-none"
                 poster={posterImage?.startsWith("http") ? posterImage : `https://image.tmdb.org/t/p/original/${posterImage}`}
               >
-                {/* پێدانی لینکەکە بە جۆرێک کە براوزەر ڕەتی نەکاتەوە */}
                 <source src={videoUrl} type="video/mp4" />
                 
                 {fbData?.hasSubtitle && localSubtitle && (
