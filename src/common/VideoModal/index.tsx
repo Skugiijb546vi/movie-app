@@ -28,11 +28,10 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 const VideoModal = () => {
-  // لێرەدا videoId ئەو داتایە دەبێت کە دەینێرین (کە فیلمەکەی تۆیە بە تەواوی)
+  // وەرگرتنی داتای فیلمەکە
   const { videoId: movieData, closeModal, isModalOpen } = useGlobalContext();
   const { zoomIn } = useMotion();
   
-  // دۆخی (State) تایبەت بە VIP
   const [keyInput, setKeyInput] = useState("");
   const [isVipVerified, setIsVipVerified] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -49,7 +48,6 @@ const VideoModal = () => {
     enable: isModalOpen
   });
 
-  // خاوێنکردنەوەی داتاکان کاتێک پەنجەرەکە دادەخرێت
   useEffect(() => {
     if (!isModalOpen) {
       setIsVipVerified(false);
@@ -77,7 +75,6 @@ const VideoModal = () => {
     }
   }, [isModalOpen]);
 
-  // فەنکشنی پشکنینی کلیلەکە لەناو فایەربەیس
   const verifyVipKey = async () => {
     if (!keyInput.trim()) {
       setErrorMsg("تکایە کلیلەکە داخڵ بکە!");
@@ -94,7 +91,6 @@ const VideoModal = () => {
       if (snapshot.exists()) {
         const keyData = snapshot.val();
         if (keyData.used === false) {
-          // کلیلەکە ڕاستە، با بیکەین بە بەکارهاتوو و ڤیدیۆکە پیشان بدەین
           await update(keyRef, { used: true });
           setIsVipVerified(true);
         } else {
@@ -110,13 +106,15 @@ const VideoModal = () => {
     }
   };
 
-  // پشکنین کە ئایا فیلمەکە VIP یە یان نا؟ (گەر ناوی videoId بوو، واتە هێشتا ستایلە کۆنەکەیە)
+  // پشکنینی ئایا ڤی ئای پییە
   const isVip = movieData?.badge_text === "VIP";
   const canPlayVideo = !isVip || isVipVerified;
   
-  // دۆزینەوەی لینکی ڤیدیۆکە (چونکە لەوانەیە ناوی جیاواز بێت بەپێی بەشەکان)
-  const videoUrl = movieData?.custom_video_url || movieData?.video_url || (typeof movieData === 'string' ? movieData : "");
-  const subtitleUrl = movieData?.subtitle_url || movieData?.subtitleKurdish;
+  // دۆزینەوەی لینکی ڤیدیۆکە، گرنگ نییە چ ناوێکت لە فایەربەیس بۆ داناوە
+  const videoUrl = movieData?.video_url || movieData?.custom_video_url || movieData?.movie_url || movieData?.video || (typeof movieData === 'string' ? movieData : "");
+  
+  // دۆزینەوەی لینکی ژێرنووس
+  const subtitleUrl = movieData?.subtitle_url || movieData?.subtitleKurdish || movieData?.subtitle;
 
   return (
     <AnimatePresence>
@@ -139,16 +137,19 @@ const VideoModal = () => {
             </button>
 
             {canPlayVideo ? (
-              /* بەشی لێدانی ڤیدیۆکە */
+              // ڤیدیۆ پلەیەر
               <video
                 controls
                 autoPlay
                 crossOrigin="anonymous"
                 className="w-full h-full bg-black object-contain outline-none"
-                poster={movieData?.poster_path}
+                poster={movieData?.poster_path ? `https://image.tmdb.org/t/p/original/${movieData.poster_path}` : ""}
               >
+                {/* پێدانی لینکی ڤیدیۆکە */}
                 <source src={videoUrl} type="video/mp4" />
-                {movieData?.hasSubtitle && subtitleUrl && (
+                
+                {/* ئەگەر ژێرنووسی هەبوو */}
+                {subtitleUrl && (
                   <track
                     label="کوردی"
                     kind="subtitles"
@@ -160,7 +161,7 @@ const VideoModal = () => {
                 براوزەرەکەت پشتگیری ڤیدیۆ ناکات.
               </video>
             ) : (
-              /* بەشی داخڵکردنی کلیلی VIP */
+              // بەشی داخڵکردنی کلیلی VIP
               <div className="flex flex-col items-center justify-center h-full p-6 text-center">
                 <div className="w-16 h-16 bg-yellow-500/20 text-yellow-500 rounded-full flex items-center justify-center mb-4">
                   <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
