@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { m, AnimatePresence } from "framer-motion";
 import { IoMdClose, IoMdSettings, IoMdPlay, IoMdPause, IoMdExpand } from "react-icons/io";
-import { FaTelegramPlane } from "react-icons/fa"; // ئایکۆنی تێلیگرام زیاد کرا
+import { FaTelegramPlane, FaAward } from "react-icons/fa"; // ئایکۆنەکان لێرە زیاد کران
 
 import { initializeApp } from "firebase/app";
 import { getDatabase, ref, get, update } from "firebase/database";
@@ -223,7 +223,7 @@ const VideoModal = () => {
   return (
     <AnimatePresence>
       {isModalOpen && (
-        <Overlay className="flex items-center justify-center backdrop-blur-sm z-50">
+        <Overlay className="flex items-center justify-center backdrop-blur-md z-50">
           <style>
             {`
               video::cue {
@@ -391,44 +391,64 @@ const VideoModal = () => {
                 )}
               </div>
             ) : (
-              // پەنجەرەی شاهانەی VIP 👑
-              <div className="flex flex-col items-center justify-center h-full p-4 sm:p-8 text-center bg-gradient-to-br from-[#1a1400] via-black to-black relative border-y-4 sm:border-4 border-yellow-600/60 sm:rounded-2xl shadow-[inset_0_0_150px_rgba(202,138,4,0.15)]">
-                <button onClick={closeModal} className="absolute top-4 right-4 bg-white/5 p-2 rounded-full text-white hover:bg-red-600 transition z-10"><IoMdClose size={24} /></button>
-                
-                <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-tr from-yellow-700 via-yellow-500 to-yellow-300 text-black rounded-full flex items-center justify-center mb-6 shadow-[0_0_40px_rgba(234,179,8,0.4)]">
-                  <svg className="w-10 h-10 sm:w-12 sm:h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-                </div>
-                
-                <h2 className="text-3xl sm:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-yellow-600 mb-3 drop-shadow-lg tracking-wider">کۆشکی پاشایەتی</h2>
-                <p className="text-gray-300 text-sm sm:text-base mb-8 max-w-md leading-relaxed font-medium">ئەم فیلمە تەنها بۆ بەشداربووانی پریمیۆمە. بۆ بینینی ئەم فیلمە شاهانەیە، تکتێکی سینەما بکڕە لە ڕێگەی تێلیگرامەوە.</p>
+              // دیزاینە نوێیەکە ڕێک بەپێی وێنەکە
+              <div className="flex flex-col items-center justify-center h-full p-4 w-full bg-black/80 relative">
+                <div className="bg-[#4a0a0a] border-[3px] border-[#d4af37] rounded-[2rem] p-6 sm:p-8 w-full max-w-[420px] flex flex-col items-center shadow-2xl relative z-10">
+                  
+                  {/* ئایکۆنی خەڵاتە زێڕینەکە */}
+                  <div className="mb-4 text-[#d4af37] drop-shadow-[0_0_10px_rgba(212,175,55,0.5)]">
+                    <FaAward size={64} />
+                  </div>
 
-                <a
-                  href="https://t.me/sarkoakram"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-3 w-full max-w-sm bg-gradient-to-r from-[#0088cc] to-[#005580] hover:scale-[1.02] transition-transform text-white px-6 py-4 rounded-xl font-bold mb-6 shadow-[0_0_20px_rgba(0,136,204,0.4)]"
-                >
-                  <FaTelegramPlane size={24} />
-                  <span className="text-base sm:text-lg">کڕینی تکت @sarkoakram</span>
-                </a>
+                  {/* دەقە داواکراوەکە */}
+                  <h2 className="text-white text-xl sm:text-2xl font-bold mb-3 text-center leading-relaxed">
+                    بۆ بینی ئەم فلمە تکایە سەرەتا تکتێکی سینەما بکڕە
+                  </h2>
+                  
+                  <p className="text-[#a0a0a0] text-xs sm:text-sm mb-6 text-center">
+                    VIP تەنها خاوەن تکتەکان دەتوانن سەیری ناوەڕۆکی بکەن.
+                  </p>
 
-                <div className="w-full max-w-sm flex flex-col gap-4 p-5 bg-black/60 border border-yellow-900/60 rounded-2xl backdrop-blur-md">
-                  <input
-                    type="text"
-                    value={keyInput}
-                    onChange={(e) => setKeyInput(e.target.value)}
-                    placeholder="کلیلەکەت لێرە بنووسە..."
-                    className="w-full bg-[#0a0a0a] border border-yellow-700/50 text-yellow-500 placeholder-yellow-800/60 p-4 rounded-xl focus:outline-none focus:border-yellow-400 text-center text-xl tracking-widest uppercase transition shadow-[inset_0_0_15px_rgba(0,0,0,0.6)]"
-                  />
+                  {/* بۆکسی داخڵکردنی کلیل */}
+                  <div className="w-full mb-4">
+                    <input
+                      type="text"
+                      value={keyInput}
+                      onChange={(e) => setKeyInput(e.target.value)}
+                      placeholder="...کلیلەکە لێرە بنووسە"
+                      className="w-full bg-[#2a0404] border border-[#7a1212] text-white placeholder-gray-500 p-4 rounded-xl focus:outline-none focus:border-[#d4af37] text-right text-sm transition"
+                      dir="rtl"
+                    />
+                  </div>
 
-                  {errorMsg && <p className="text-red-500 text-sm font-medium bg-red-500/10 py-2 px-3 rounded-lg border border-red-500/20">{errorMsg}</p>}
+                  {errorMsg && <p className="text-red-400 text-sm mb-4 text-center font-medium">{errorMsg}</p>}
 
+                  {/* دوگمەی سەوز بۆ چالاککردن */}
                   <button
                     onClick={verifyVipKey}
                     disabled={isLoadingVip}
-                    className="w-full bg-gradient-to-r from-yellow-700 via-yellow-600 to-yellow-700 py-4 rounded-xl font-bold text-black text-lg hover:brightness-110 transition disabled:opacity-50 shadow-[0_0_20px_rgba(202,138,4,0.3)]"
+                    className="w-full bg-[#2f855a] hover:bg-[#276749] text-white font-bold py-3.5 rounded-xl mb-3 transition disabled:opacity-50 flex items-center justify-center gap-2"
                   >
-                    {isLoadingVip ? "لە پشکنیندایە..." : "چالاککردن و سەیرکردن"}
+                    {isLoadingVip ? (
+                       <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    ) : (
+                      <span>✨ چالاککردنی کلیل</span>
+                    )}
+                  </button>
+
+                  {/* دوگمەی زەرد بۆ تێلیگرام */}
+                  <a
+                    href="https://t.me/sarkoakram"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full bg-[#ecc94b] hover:bg-[#d69e2e] text-black font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 transition mb-4"
+                  >
+                    <span>داواکردنی کلیل (تێلیگرام) ➤</span>
+                  </a>
+
+                  {/* دوگمەی داخستن */}
+                  <button onClick={closeModal} className="text-gray-400 hover:text-white text-sm transition mt-2">
+                    داخستن
                   </button>
                 </div>
               </div>
