@@ -15,7 +15,9 @@ const Detail = () => {
   const { category, id } = useParams();
   const [show, setShow] = useState(false);
   const { fadeDown, staggerContainer } = useMotion();
-  const { openModal } = useGlobalContext(); // هێنانی فەنکشنی کردنەوەی پلەیەرەکە
+
+  // لێرەدا ناوەکانمان گۆڕی بۆ ئەوانەی کە پڕۆژەکە دەیانناسێتەوە
+  const { setIsModalOpen, setVideoId } = useGlobalContext();
 
   const {
     data: movie,
@@ -48,7 +50,6 @@ const Detail = () => {
     return <Error error="کێشەیەک هەیە لە هێنانی فیلمەکە!" />;
   }
 
-  // دەرهێنانی داتاکان و دانانی بەدیل (Fallback) بۆ ئەوەی وێبسایتەکە کراش نەکات
   const {
     title,
     poster_path: posterPath,
@@ -60,7 +61,6 @@ const Detail = () => {
     badge_text,
   } = movie;
 
-  // ڕێکخستنی وێنەی باکگراوند بۆ ئەوەی ڕاستەوخۆ لینکی وێنەکەی تۆ بخوێنێتەوە
   const bgUrl = posterPath?.startsWith("http")
     ? posterPath
     : `https://image.tmdb.org/t/p/original/${posterPath}`;
@@ -71,9 +71,10 @@ const Detail = () => {
     backgroundSize: "cover",
   };
 
-  // کاتێک کرتە لە دوگمەی سەیرکردن دەکرێت
   const handlePlayClick = () => {
-    openModal(movie); // ناردنی تەواوی زانیارییەکانی فیلمەکە بۆ پلەیەرەکە
+    // ناردنی داتاکان و کردنەوەی پەنجەرەکە بێ کێشە
+    setVideoId(movie);
+    setIsModalOpen(true);
   };
 
   return (
@@ -126,7 +127,6 @@ const Detail = () => {
               </button>
             </m.p>
 
-            {/* دوگمەی سەیرکردنی فیلم */}
             <m.div variants={fadeDown} className="mt-4">
               <button
                 onClick={handlePlayClick}
@@ -142,7 +142,6 @@ const Detail = () => {
         </div>
       </section>
 
-      {/* شاردنەوەی بەشەکانی تر ئەگەر داتایان نەبوو لە فایەربەیس */}
       {videos?.results?.length > 0 && <Videos videos={videos.results} />}
     </>
   );
