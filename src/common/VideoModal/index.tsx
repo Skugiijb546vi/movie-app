@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { m, AnimatePresence } from "framer-motion";
 import { IoMdClose, IoMdSettings, IoMdPlay, IoMdPause, IoMdExpand } from "react-icons/io";
+import { FaTelegramPlane } from "react-icons/fa"; // ئایکۆنی تێلیگرام زیاد کرا
 
 import { initializeApp } from "firebase/app";
 import { getDatabase, ref, get, update } from "firebase/database";
@@ -24,7 +25,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// فەنکشن بۆ ڕێکخستنی کات (00:00)
 const formatTime = (timeInSeconds) => {
   if (isNaN(timeInSeconds)) return "00:00";
   const m = Math.floor(timeInSeconds / 60).toString().padStart(2, '0');
@@ -38,7 +38,6 @@ const VideoModal = () => {
 
   const videoRef = useRef(null);
   const containerRef = useRef(null);
-  // لێرەدا controlsTimeoutRef-م سڕییەوە چونکە بیڵدەکەی تێک دابوو (Unused variable)
 
   const [keyInput, setKeyInput] = useState("");
   const [isVipVerified, setIsVipVerified] = useState(false);
@@ -49,14 +48,12 @@ const VideoModal = () => {
   const [isFetchingVideo, setIsFetchingVideo] = useState(true);
   const [localSubtitle, setLocalSubtitle] = useState("");
 
-  // ستەیتەکانی پلەیەرە مۆدێرنەکە
   const [isPlaying, setIsPlaying] = useState(true);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isBuffering, setIsBuffering] = useState(true);
   const [showControls, setShowControls] = useState(true);
 
-  // ڕێکخستنەکانی ژێرنووس
   const [showSettings, setShowSettings] = useState(false);
   const [subSize, setSubSize] = useState("100");
   const [subColor, setSubColor] = useState("#ffffff");
@@ -77,7 +74,6 @@ const VideoModal = () => {
     enable: isModalOpen
   });
 
-  // هێنانی داتا لە فایەربەیس
   useEffect(() => {
     if (isModalOpen && movieData?.id) {
       setIsFetchingVideo(true);
@@ -94,7 +90,6 @@ const VideoModal = () => {
     }
   }, [isModalOpen, movieData]);
 
-  // ڕێگریکردن لە سکڕۆڵی شاشە
   useEffect(() => {
     const body = document.body;
     const rootNode = document.documentElement;
@@ -113,7 +108,6 @@ const VideoModal = () => {
     }
   }, [isModalOpen]);
 
-  // هێنانی ژێرنووس
   useEffect(() => {
     const subUrl = fbData?.subtitleKurdish || fbData?.subtitle_url || "";
     if (subUrl) {
@@ -127,13 +121,11 @@ const VideoModal = () => {
     }
   }, [fbData]);
 
-  // فەنکشنی ونبوون و دەرکەوتنی کۆنتڕۆڵەکان بە پەنجە لێدان (Toggle Logic)
   const handleToggleControls = (e) => {
     e.stopPropagation();
     setShowControls(!showControls);
   };
 
-  // کۆنتڕۆڵی ڤیدیۆ (Play/Pause, Seek)
   const togglePlay = (e) => {
     e.stopPropagation();
     if (videoRef.current) {
@@ -159,7 +151,6 @@ const VideoModal = () => {
     }
   };
 
-  // فوڵکردنی شاشە و سووڕان بۆ Landscape - لێرەدا window.screen-مان بەکارهێنا بۆ ئەوەی بیڵدەکە کار بکات
   const toggleFullScreen = (e) => {
     e.stopPropagation();
     if (!document.fullscreenElement) {
@@ -177,7 +168,6 @@ const VideoModal = () => {
     }
   };
 
-  // سیستەمی کلیلەکانی VIP
   const verifyVipKey = async () => {
     if (!keyInput.trim()) {
       setErrorMsg("تکایە کلیلەکە داخڵ بکە!");
@@ -302,7 +292,7 @@ const VideoModal = () => {
                   className="w-full h-full object-contain outline-none cursor-pointer"
                   poster={posterImage?.startsWith("http") ? posterImage : `https://image.tmdb.org/t/p/original/${posterImage}`}
                 >
-                  {fbData?.hasSubtitle && localSubtitle && (
+                  {(fbData?.hasSubtitle || fbData?.hasKurdishSub) && localSubtitle && (
                     <track label="کوردی" kind="subtitles" srcLang="ku" src={localSubtitle} default />
                   )}
                 </video>
@@ -401,31 +391,46 @@ const VideoModal = () => {
                 )}
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center h-full p-8 text-center bg-[#0a0a0a] relative">
-                <button onClick={closeModal} className="absolute top-4 right-4 bg-white/10 p-2 rounded-full text-white hover:bg-red-600 transition"><IoMdClose size={24} /></button>
-                <div className="w-20 h-20 bg-yellow-500/10 text-yellow-500 rounded-full flex items-center justify-center mb-6 border border-yellow-500/30">
-                  <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+              // پەنجەرەی شاهانەی VIP 👑
+              <div className="flex flex-col items-center justify-center h-full p-4 sm:p-8 text-center bg-gradient-to-br from-[#1a1400] via-black to-black relative border-y-4 sm:border-4 border-yellow-600/60 sm:rounded-2xl shadow-[inset_0_0_150px_rgba(202,138,4,0.15)]">
+                <button onClick={closeModal} className="absolute top-4 right-4 bg-white/5 p-2 rounded-full text-white hover:bg-red-600 transition z-10"><IoMdClose size={24} /></button>
+                
+                <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-tr from-yellow-700 via-yellow-500 to-yellow-300 text-black rounded-full flex items-center justify-center mb-6 shadow-[0_0_40px_rgba(234,179,8,0.4)]">
+                  <svg className="w-10 h-10 sm:w-12 sm:h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
                 </div>
-                <h2 className="text-3xl font-extrabold text-white mb-2">فیلمی <span className="text-yellow-500">VIP</span></h2>
-                <p className="text-gray-400 text-sm mb-8 max-w-sm">ئەم فیلمە تەنها بۆ بەشداربووانی پریمیۆمە. تکایە کلیلەکە داخڵ بکە بۆ کردنەوەی فیلمەکە.</p>
+                
+                <h2 className="text-3xl sm:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-yellow-600 mb-3 drop-shadow-lg tracking-wider">کۆشکی پاشایەتی</h2>
+                <p className="text-gray-300 text-sm sm:text-base mb-8 max-w-md leading-relaxed font-medium">ئەم فیلمە تەنها بۆ بەشداربووانی پریمیۆمە. بۆ بینینی ئەم فیلمە شاهانەیە، تکتێکی سینەما بکڕە لە ڕێگەی تێلیگرامەوە.</p>
 
-                <input
-                  type="text"
-                  value={keyInput}
-                  onChange={(e) => setKeyInput(e.target.value)}
-                  placeholder="کلیلەکەت لێرە بنووسە..."
-                  className="w-full max-w-sm bg-[#141414] border border-gray-700 text-white p-4 rounded-xl focus:outline-none focus:border-red-600 text-center text-xl tracking-widest uppercase transition"
-                />
-
-                {errorMsg && <p className="text-red-500 text-sm mt-4 font-medium bg-red-500/10 py-2 px-4 rounded-lg">{errorMsg}</p>}
-
-                <button
-                  onClick={verifyVipKey}
-                  disabled={isLoadingVip}
-                  className="mt-6 bg-red-600 max-w-sm w-full py-4 rounded-xl font-bold text-white text-lg hover:bg-red-700 transition disabled:opacity-50"
+                <a
+                  href="https://t.me/sarkoakram"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-3 w-full max-w-sm bg-gradient-to-r from-[#0088cc] to-[#005580] hover:scale-[1.02] transition-transform text-white px-6 py-4 rounded-xl font-bold mb-6 shadow-[0_0_20px_rgba(0,136,204,0.4)]"
                 >
-                  {isLoadingVip ? "لە پشکنیندایە..." : "چالاککردن و سەیرکردن"}
-                </button>
+                  <FaTelegramPlane size={24} />
+                  <span className="text-base sm:text-lg">کڕینی تکت @sarkoakram</span>
+                </a>
+
+                <div className="w-full max-w-sm flex flex-col gap-4 p-5 bg-black/60 border border-yellow-900/60 rounded-2xl backdrop-blur-md">
+                  <input
+                    type="text"
+                    value={keyInput}
+                    onChange={(e) => setKeyInput(e.target.value)}
+                    placeholder="کلیلەکەت لێرە بنووسە..."
+                    className="w-full bg-[#0a0a0a] border border-yellow-700/50 text-yellow-500 placeholder-yellow-800/60 p-4 rounded-xl focus:outline-none focus:border-yellow-400 text-center text-xl tracking-widest uppercase transition shadow-[inset_0_0_15px_rgba(0,0,0,0.6)]"
+                  />
+
+                  {errorMsg && <p className="text-red-500 text-sm font-medium bg-red-500/10 py-2 px-3 rounded-lg border border-red-500/20">{errorMsg}</p>}
+
+                  <button
+                    onClick={verifyVipKey}
+                    disabled={isLoadingVip}
+                    className="w-full bg-gradient-to-r from-yellow-700 via-yellow-600 to-yellow-700 py-4 rounded-xl font-bold text-black text-lg hover:brightness-110 transition disabled:opacity-50 shadow-[0_0_20px_rgba(202,138,4,0.3)]"
+                  >
+                    {isLoadingVip ? "لە پشکنیندایە..." : "چالاککردن و سەیرکردن"}
+                  </button>
+                </div>
               </div>
             )}
           </m.div>
