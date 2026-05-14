@@ -11,6 +11,7 @@ import { useOnClickOutside } from "@/hooks/useOnClickOutside";
 import { useMotion } from "@/hooks/useMotion";
 import { useOnKeyPress } from "@/hooks/useOnKeyPress";
 
+// ڕێکخستنی فایەربەیسەکەت
 const firebaseConfig = {
   apiKey: "AIzaSyAn-U4aTP5LwHf9cIOdPAXp4fCMzYyrDV8",
   authDomain: "sebartv-efccb.firebaseapp.com",
@@ -24,6 +25,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
+// فەنکشن بۆ پیشاندانی کات بە جوانی
 const formatTime = (timeInSeconds) => {
   if (isNaN(timeInSeconds)) return "00:00";
   const m = Math.floor(timeInSeconds / 60).toString().padStart(2, '0');
@@ -39,21 +41,23 @@ const VideoModal = () => {
   const containerRef = useRef(null);
   const controlsTimeoutRef = useRef(null);
 
+  // ستەیتەکانی پەیوەست بە کلیل و فایەربەیس
   const [keyInput, setKeyInput] = useState("");
   const [isVipVerified, setIsVipVerified] = useState(false);
   const [isLoadingVip, setIsLoadingVip] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
-
   const [fbData, setFbData] = useState(null);
   const [isFetchingVideo, setIsFetchingVideo] = useState(true);
   const [localSubtitle, setLocalSubtitle] = useState("");
 
+  // ستەیتەکانی پلەیەرەکە
   const [isPlaying, setIsPlaying] = useState(true);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isBuffering, setIsBuffering] = useState(true);
   const [showControls, setShowControls] = useState(true);
 
+  // ستەیتەکانی ڕێکخستنی ژێرنووس
   const [showSettings, setShowSettings] = useState(false);
   const [subSize, setSubSize] = useState("100");
   const [subColor, setSubColor] = useState("#ffffff");
@@ -66,6 +70,7 @@ const VideoModal = () => {
 
   useOnKeyPress({ key: "Escape", action: () => { if (!document.fullscreenElement) closeModal(); }, enable: isModalOpen });
 
+  // هێنانی زانیاری فیلمەکە
   useEffect(() => {
     if (isModalOpen && movieData?.id) {
       setIsFetchingVideo(true);
@@ -73,6 +78,7 @@ const VideoModal = () => {
       setLocalSubtitle("");
       setIsVipVerified(false);
       setErrorMsg("");
+
       const videoRefFb = ref(db, `np/${movieData.id}`);
       get(videoRefFb).then((snapshot) => {
         if (snapshot.exists()) setFbData(snapshot.val());
@@ -81,42 +87,38 @@ const VideoModal = () => {
     }
   }, [isModalOpen, movieData]);
 
+  // وەستاندنی سکڕۆڵی پەڕە
   useEffect(() => {
     const body = document.body;
-    const rootNode = document.documentElement;
     if (isModalOpen) {
-      const scrollTop = rootNode.scrollTop;
-      body.style.top = `-${scrollTop}px`;
       body.classList.add("no-scroll");
-      return;
-    }
-    const top = parseFloat(body.style.top) * -1;
-    body.classList.remove("no-scroll");
-    if (top) {
-      rootNode.style.scrollBehavior = "auto";
-      rootNode.scrollTop = top;
-      rootNode.style.scrollBehavior = "smooth";
+    } else {
+      body.classList.remove("no-scroll");
     }
   }, [isModalOpen]);
 
+  // هێنانی ژێرنووس بە شێوەی BLOB بۆ ئەوەی براوزەر ڕەتی نەکاتەوە
   useEffect(() => {
     const subUrl = fbData?.subtitleKurdish || fbData?.subtitle_url || "";
     if (subUrl) {
-      fetch(subUrl).then((res) => res.text()).then((text) => {
-        const blob = new Blob([text], { type: "text/vtt" });
-        setLocalSubtitle(URL.createObjectURL(blob));
-      }).catch(() => {});
+      fetch(subUrl)
+        .then((res) => res.text())
+        .then((text) => {
+          const blob = new Blob([text], { type: "text/vtt" });
+          setLocalSubtitle(URL.createObjectURL(blob));
+        })
+        .catch(() => {});
     }
   }, [fbData]);
 
-  // فەنکشنی نوێ بۆ Toggle کردنی کۆنتڕۆڵەکان
+  // فەنکشنی ونبوون و دەرکەوتنی کۆنتڕۆڵەکان بە پەنجە لێدان
   const handleToggleControls = (e) => {
     e.stopPropagation();
     setShowControls(!showControls);
   };
 
   const togglePlay = (e) => {
-    e.stopPropagation(); // بۆ ئەوەی کۆنتڕۆڵەکە ون نەبێت کاتێک کلیک لە دوگمەکە دەکەیت
+    e.stopPropagation();
     if (videoRef.current) {
       if (isPlaying) videoRef.current.pause();
       else videoRef.current.play();
@@ -140,7 +142,6 @@ const VideoModal = () => {
     }
   };
 
-  // فوڵکردنی شاشە و سووڕان بۆ Landscape
   const toggleFullScreen = (e) => {
     e.stopPropagation();
     if (!document.fullscreenElement) {
@@ -154,8 +155,12 @@ const VideoModal = () => {
     }
   };
 
+  // سیستەمی زیرەکی VIP و پشکنینی کلیلەکان
   const verifyVipKey = async () => {
-    if (!keyInput.trim()) { setErrorMsg("تکایە کلیلەکە داخڵ بکە!"); return; }
+    if (!keyInput.trim()) {
+      setErrorMsg("تکایە کلیلەکە داخڵ بکە!");
+      return;
+    }
     setIsLoadingVip(true);
     setErrorMsg("");
     try {
@@ -164,16 +169,19 @@ const VideoModal = () => {
       if (snapshot.exists()) {
         const keyData = snapshot.val();
         const now = Date.now();
+
         if (keyData.expiry_date && now > keyData.expiry_date) {
           setErrorMsg("ببورە، کاتی ئەم کلیلە بەسەرچووە!");
           setIsLoadingVip(false);
           return;
         }
+
         let deviceId = localStorage.getItem("sebar_device_id");
         if (!deviceId) {
           deviceId = "dev_" + Math.random().toString(36).substr(2, 9);
           localStorage.setItem("sebar_device_id", deviceId);
         }
+
         if (keyData.used === false) {
           await update(keyRefDb, { used: true, device_id: deviceId });
           setIsVipVerified(true);
@@ -182,12 +190,19 @@ const VideoModal = () => {
         } else {
           setErrorMsg("ئەم کلیلە پێشتر لەلایەن کەسێکی ترەوە بەکارهاتووە!");
         }
-      } else { setErrorMsg("ئەم کلیلە بوونی نییە یان هەڵەیە!"); }
-    } catch (error) { setErrorMsg("کێشەیەک ڕوویدا لە پەیوەندیکردن."); } finally { setIsLoadingVip(false); }
+      } else {
+        setErrorMsg("ئەم کلیلە بوونی نییە یان هەڵەیە!");
+      }
+    } catch (error) {
+      setErrorMsg("کێشەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەر.");
+    } finally {
+      setIsLoadingVip(false);
+    }
   };
 
   const isVip = fbData?.badge_text === "VIP";
   const canPlayVideo = !isVip || isVipVerified;
+  
   const rawUrl = fbData?.url || fbData?.video_url || "";
   const videoUrl = rawUrl ? `https://videoproxy.sarkotiktok36.workers.dev/?url=${encodeURIComponent(rawUrl)}` : "";
   const posterImage = fbData?.image || movieData?.poster_path || "";
@@ -198,19 +213,42 @@ const VideoModal = () => {
         <Overlay className="flex items-center justify-center backdrop-blur-sm z-50">
           <style>
             {`
-              video::cue { font-size: ${subSize}%; color: ${subColor}; background-color: ${subBg}; text-shadow: 2px 2px 4px rgba(0,0,0,0.9); font-family: Arial, sans-serif; }
-              input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: #E50914; cursor: pointer; margin-top: -6px; }
-              input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: rgba(255, 255, 255, 0.3); border-radius: 2px; }
+              video::cue {
+                font-size: ${subSize}%;
+                color: ${subColor};
+                background-color: ${subBg};
+                text-shadow: 2px 2px 4px rgba(0,0,0,0.9);
+              }
+              input[type=range]::-webkit-slider-thumb {
+                -webkit-appearance: none;
+                height: 16px;
+                width: 16px;
+                border-radius: 50%;
+                background: #ff0000;
+                cursor: pointer;
+                margin-top: -6px;
+              }
+              input[type=range]::-webkit-slider-runnable-track {
+                width: 100%;
+                height: 4px;
+                background: rgba(255, 255, 255, 0.2);
+                border-radius: 2px;
+              }
             `}
           </style>
 
-          <m.div variants={zoomIn(0.9, 0.3)} initial="hidden" animate="show" exit="hidden" ref={modalRef}
+          <m.div
+            variants={zoomIn(0.9, 0.3)}
+            initial="hidden"
+            animate="show"
+            exit="hidden"
+            ref={modalRef}
             className="md:w-[900px] md:h-[520px] sm:w-[95vw] sm:h-[65vh] w-[100vw] h-[100vh] sm:rounded-2xl dark:bg-gray-900 bg-black relative flex flex-col shadow-2xl overflow-hidden"
           >
             {isFetchingVideo ? (
               <div className="flex flex-col items-center justify-center h-full w-full bg-[#0a0a0a]">
                 <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin mb-4"></div>
-                <p className="text-gray-300 font-semibold text-lg animate-pulse">هێنان...</p>
+                <p className="text-gray-300 font-semibold text-lg animate-pulse">لە لۆدین داین...</p>
               </div>
             ) : !videoUrl ? (
               <div className="flex flex-col items-center justify-center h-full w-full bg-[#0a0a0a] relative">
@@ -219,8 +257,18 @@ const VideoModal = () => {
                 <p className="text-gray-200 text-xl font-bold">ببورە، لینکی ئەم فیلمە بەردەست نییە!</p>
               </div>
             ) : canPlayVideo ? (
-              <div ref={containerRef} className="w-full h-full relative group bg-black" onClick={handleToggleControls}>
-                <video ref={videoRef} key={videoUrl} src={videoUrl} autoPlay playsInline controlsList="nodownload"
+              <div 
+                ref={containerRef}
+                className="w-full h-full relative group bg-black"
+                onClick={handleToggleControls}
+              >
+                <video
+                  ref={videoRef}
+                  key={videoUrl}
+                  src={videoUrl}
+                  autoPlay
+                  playsInline
+                  controlsList="nodownload" 
                   onTimeUpdate={() => setCurrentTime(videoRef.current?.currentTime || 0)}
                   onLoadedMetadata={() => setDuration(videoRef.current?.duration || 0)}
                   onPlaying={() => { setIsPlaying(true); setIsBuffering(false); }}
@@ -229,19 +277,26 @@ const VideoModal = () => {
                   className="w-full h-full object-contain outline-none cursor-pointer"
                   poster={posterImage?.startsWith("http") ? posterImage : `https://image.tmdb.org/t/p/original/${posterImage}`}
                 >
-                  {fbData?.hasSubtitle && localSubtitle && ( <track label="کوردی" kind="subtitles" srcLang="ku" src={localSubtitle} default /> )}
+                  {fbData?.hasSubtitle && localSubtitle && (
+                    <track label="کوردی" kind="subtitles" srcLang="ku" src={localSubtitle} default />
+                  )}
                 </video>
 
                 <div className={`absolute inset-0 bg-gradient-to-b from-black/70 via-transparent to-black/80 pointer-events-none transition-opacity duration-300 ${showControls || !isPlaying ? "opacity-100" : "opacity-0"}`}></div>
 
                 <div className={`absolute inset-0 flex flex-col justify-between p-4 sm:p-6 transition-opacity duration-300 ${showControls || !isPlaying ? "opacity-100" : "opacity-0"}`}>
+                  
                   <div className="flex items-center justify-between z-40">
                     <button onClick={(e) => { e.stopPropagation(); closeModal(); }} className="bg-white/10 hover:bg-red-600 backdrop-blur-md p-2 rounded-full text-white transition"><IoMdClose size={24} /></button>
                     <h2 className="text-white font-bold text-lg drop-shadow-md truncate max-w-[70%]">{fbData?.title || movieData?.title}</h2>
                     <div className="w-10"></div> 
                   </div>
 
-                  {isBuffering && ( <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-30"><div className="w-16 h-16 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div></div> )}
+                  {isBuffering && (
+                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-30">
+                      <div className="w-16 h-16 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+                    </div>
+                  )}
 
                   <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex items-center gap-6 sm:gap-12 z-40">
                     <button onClick={(e) => skipTime(e, -10)} className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 flex flex-col items-center justify-center text-white backdrop-blur-sm transition"><span className="text-xs sm:text-sm font-bold">-10</span></button>
@@ -257,7 +312,7 @@ const VideoModal = () => {
                         <button onClick={toggleFullScreen} className="text-white hover:text-red-500 transition"><IoMdExpand size={24} /></button>
                       </div>
                     </div>
-                    <input type="range" min="0" max={duration || 100} value={currentTime} onChange={handleSeek} onClick={(e) => e.stopPropagation()} className="w-full h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer" style={{ background: `linear-gradient(to right, #E50914 ${(currentTime / duration) * 100}%, rgba(255,255,255,0.3) ${(currentTime / duration) * 100}%)` }} />
+                    <input type="range" min="0" max={duration || 100} value={currentTime} onChange={handleSeek} onClick={(e) => e.stopPropagation()} className="w-full h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer" style={{ background: `linear-gradient(to right, #ff0000 ${(currentTime / duration) * 100}%, rgba(255,255,255,0.3) ${(currentTime / duration) * 100}%)` }} />
                   </div>
                 </div>
 
@@ -275,10 +330,10 @@ const VideoModal = () => {
                 <button onClick={closeModal} className="absolute top-4 right-4 bg-white/10 p-2 rounded-full text-white hover:bg-red-600 transition"><IoMdClose size={24} /></button>
                 <div className="w-20 h-20 bg-yellow-500/10 text-yellow-500 rounded-full flex items-center justify-center mb-6 border border-yellow-500/30"><svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg></div>
                 <h2 className="text-3xl font-extrabold text-white mb-2">فیلمی <span className="text-yellow-500">VIP</span></h2>
-                <p className="text-gray-400 text-sm mb-8 max-w-sm">ئەم فیلمە تەنها بۆ بەشداربووانی پریمیۆمە. تکایە کلیلەکە داخڵ بکە.</p>
-                <input type="text" value={keyInput} onChange={(e) => setKeyInput(e.target.value)} placeholder="کلیلەکەت..." className="w-full max-w-sm bg-[#141414] border border-gray-700 text-white p-4 rounded-xl focus:outline-none focus:border-red-600 text-center text-xl tracking-widest uppercase transition" />
-                {errorMsg && <p className="text-red-500 text-sm mt-4 font-medium">{errorMsg}</p>}
-                <button onClick={verifyVipKey} disabled={isLoadingVip} className="mt-6 bg-red-600 max-w-sm w-full py-4 rounded-xl font-bold text-white text-lg hover:bg-red-700 transition disabled:opacity-50">{isLoadingVip ? "لە پشکنیندایە..." : "چالاککردن"}</button>
+                <p className="text-gray-400 text-sm mb-8 max-w-sm">ئەم فیلمە تەنها بۆ بەشداربووانی پریمیۆمە. تکایە کلیلەکە داخڵ بکە بۆ کردنەوەی فیلمەکە.</p>
+                <input type="text" value={keyInput} onChange={(e) => setKeyInput(e.target.value)} placeholder="کلیلەکەت لێرە بنووسە..." className="w-full max-w-sm bg-[#141414] border border-gray-700 text-white p-4 rounded-xl focus:outline-none focus:border-red-600 text-center text-xl tracking-widest uppercase transition" />
+                {errorMsg && <p className="text-red-500 text-sm mt-4 font-medium bg-red-500/10 py-2 px-4 rounded-lg">{errorMsg}</p>}
+                <button onClick={verifyVipKey} disabled={isLoadingVip} className="mt-6 bg-red-600 max-w-sm w-full py-4 rounded-xl font-bold text-white text-lg hover:bg-red-700 transition disabled:opacity-50">{isLoadingVip ? "لە پشکنیندایە..." : "چالاککردن و سەیرکردن"}</button>
               </div>
             )}
           </m.div>
