@@ -115,16 +115,22 @@ const VideoModal = () => {
     }
   }, [isModalOpen]);
 
+  // کێشەی ژێرنووسەکان لێرەدا بەتەواوی چارەسەر کرا ⚡
   useEffect(() => {
     const subUrl = fbData?.subtitleKurdish || fbData?.subtitle_url || "";
     if (subUrl) {
-      fetch(subUrl)
+      // دڵنیابوونەوە لەوەی لینکەکە https ی پێوەیە
+      const finalUrl = subUrl.startsWith("http") ? subUrl : `https://${subUrl}`;
+
+      fetch(finalUrl)
         .then((res) => res.text())
         .then((text) => {
-          const blob = new Blob([text], { type: "text/vtt" });
+          // سڕینەوەی پیتە شاراوەکانی وەک BOM کە کێشە بۆ ژێرنووس دروست دەکەن
+          const cleanText = text.replace(/^\uFEFF/, "").trimStart();
+          const blob = new Blob([cleanText], { type: "text/vtt" });
           setLocalSubtitle(URL.createObjectURL(blob));
         })
-        .catch(() => {});
+        .catch((err) => console.log("Subtitle Fetch Error:", err));
     }
   }, [fbData]);
 
@@ -282,7 +288,7 @@ const VideoModal = () => {
               >
                 <video
                   ref={videoRef}
-                  key={videoUrl} // <--- ئەمەم هێنایەوە، ڕێک ئەمە هۆکاری خێرا لۆدبوونەکەیە ⚡
+                  key={videoUrl}
                   src={videoUrl}
                   autoPlay
                   playsInline
