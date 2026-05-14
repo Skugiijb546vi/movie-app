@@ -108,7 +108,6 @@ const VideoModal = () => {
   const isVip = movieData?.badge_text === "VIP";
   const canPlayVideo = !isVip || isVipVerified;
   
-  // لێرەدا کێشەکەمان چارەسەر کرد، ئێستا لەناو فایەربەیس بەدوای "url" و "image" دا دەگەڕێت
   const videoUrl = movieData?.url || movieData?.video_url || (typeof movieData === 'string' ? movieData : "");
   const subtitleUrl = movieData?.subtitleKurdish || movieData?.subtitle_url;
   const posterImage = movieData?.image || movieData?.poster_path;
@@ -134,14 +133,15 @@ const VideoModal = () => {
             </button>
 
             {canPlayVideo ? (
+              // لێرەدا کێشەکە چارەسەر کرا: دانانی key و ڕاستەوخۆ پێدانی src
               <video
+                key={videoUrl}
+                src={videoUrl}
                 controls
                 autoPlay
-                crossOrigin="anonymous"
                 className="w-full h-full bg-black object-contain outline-none"
                 poster={posterImage?.startsWith("http") ? posterImage : `https://image.tmdb.org/t/p/original/${posterImage}`}
               >
-                <source src={videoUrl} type="video/mp4" />
                 {movieData?.hasSubtitle && subtitleUrl && (
                   <track
                     label="کوردی"
