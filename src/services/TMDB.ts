@@ -1,6 +1,6 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
-// لینکی داتابەیسەکەی خۆت بە شێوازی ڕاستەوخۆ (REST API)
+// لینکی داتابەیسەکەی خۆت
 const FIREBASE_DB_URL = "https://sebartv-efccb-default-rtdb.firebaseio.com";
 
 export const tmdbApi = createApi({
@@ -8,40 +8,48 @@ export const tmdbApi = createApi({
   baseQuery: fetchBaseQuery({ baseUrl: FIREBASE_DB_URL }),
 
   endpoints: (builder) => ({
-    // ١. هێنانی لیستی فیلمەکان و بەشی گەڕان (Search)
+    // ١. هێنانی لیستی فیلمەکان و بەشی گەڕان
     getShows: builder.query({
-      query: () => `/np.json`, // ڕاستەوخۆ دەچێتە بەشی np لە فایەربەیسەکەت
+      query: () => `/np.json`, 
       transformResponse: (response, meta, arg) => {
-        // گۆڕینی داتاکانی فایەربەیس بۆ لیست (Array)
-        const dataArray = Array.isArray(response)
-          ? response.filter(item => item !== null)
-          : Object.values(response || {});
+        // وەرگرتنی داتاکان و دانانی ئایدی ڕاستەقینەی فایەربەیس
+        let dataArray = [];
+        if (Array.isArray(response)) {
+          dataArray = response
+            .map((item, index) => ({ originalId: index, ...item }))
+            .filter(item => item !== null && item.title);
+        } else {
+          dataArray = Object.entries(response || {})
+            .map(([key, value]) => ({ originalId: Number(key), ...value }))
+            .filter(item => item.title);
+        }
 
-        // وەرگێڕانی ناوەکان بۆ ئەوەی دیزاینی سۆرسەکە کێشەی بۆ دروست نەبێت
-        let mappedResults = dataArray.map((movie, index) => ({
-          id: index + 1, 
-          title: movie.title,
-          name: movie.title, 
-          poster_path: movie.image, // وێنەکەی تۆ دەخەینە شوێنی پۆستەری ئەوان
+        let mappedResults = dataArray.map((movie) => ({
+          id: movie.originalId, 
+          title: movie.title || "",
+          name: movie.title || "", 
+          poster_path: movie.image, 
           backdrop_path: movie.image,
           overview: movie.description,
-          vote_average: movie.imbd,
+          vote_average: movie.imdb || movie.imbd, // چارەسەری هەردوو جۆرەکەی imdb
           release_date: movie.year?.toString(),
-          // هێشتنەوەی زانیارییە تایبەتەکانی خۆت بۆ کاتی پلەیەر و VIP
           video_url: movie.url,
           badge_text: movie.badge_text,
-          hasSubtitle: movie.hasSubtitle,
+          hasSubtitle: movie.hasSubtitle || movie.hasKurdishSub, // چارەسەری کێشەی ژێرنووس
           subtitleKurdish: movie.subtitleKurdish
         }));
 
-        // ئەگەر بەکارهێنەر سێرچی کرد، لێرەدا بۆی دەدۆزینەوە
+        // بەشی سێرچ (زۆر خێرا و هەستیار بۆ پیتەکان)
         if (arg && arg.searchQuery) {
+          const query = arg.searchQuery.toLowerCase();
           mappedResults = mappedResults.filter(m => 
-            m.title.toLowerCase().includes(arg.searchQuery.toLowerCase())
+            m.title.toLowerCase().includes(query)
           );
         }
 
-        // دانانەوەی داتاکان بەو فۆرماتەی وێبسایتەکە پێشبینی دەکات
+        // بەشی ڕیزبەندی (نوێترین فیلم بۆ سەرەوە - گەورەترین ئایدی)
+        mappedResults.sort((a, b) => b.id - a.id);
+
         return {
           results: mappedResults,
           page: 1,
@@ -51,30 +59,35 @@ export const tmdbApi = createApi({
       },
     }),
 
-    // ٢. هێنانی زانیاری تەنها یەک فیلم (بۆ کاتی کرتەکردن و چوونە ناو پەڕەی فیلمەکە)
+    // ٢. هێنانی زانیاری یەک فیلم بۆ کاتی کرتەکردن
     getShow: builder.query({
       query: () => `/np.json`,
       transformResponse: (response, meta, arg) => {
-        const dataArray = Array.isArray(response)
-          ? response.filter(item => item !== null)
-          : Object.values(response || {});
+        let dataArray = [];
+        if (Array.isArray(response)) {
+          dataArray = response
+            .map((item, index) => ({ originalId: index, ...item }))
+            .filter(item => item !== null);
+        } else {
+          dataArray = Object.entries(response || {})
+            .map(([key, value]) => ({ originalId: Number(key), ...value }));
+        }
 
-        // دۆزینەوەی فیلمەکە بەپێی ئایدی
-        const movie = dataArray[arg.id - 1] || dataArray[0];
+        // دۆزینەوەی فیلمەکە ڕێک بەپێی ئایدییەکەی
+        const movie = dataArray.find(m => m.originalId === Number(arg.id)) || dataArray[0];
 
         return {
           id: arg.id,
-          title: movie.title,
-          name: movie.title,
+          title: movie.title || "",
+          name: movie.title || "",
           poster_path: movie.image,
           backdrop_path: movie.image,
           overview: movie.description,
-          vote_average: movie.imbd,
+          vote_average: movie.imdb || movie.imbd,
           release_date: movie.year?.toString(),
-          // هەڵگرتنی لینکی ڤیدیۆکەی تۆ بۆ ئەوەی دواتر بیدەین بە پلەیەرەکە
           custom_video_url: movie.url,
           badge_text: movie.badge_text,
-          hasSubtitle: movie.hasSubtitle,
+          hasSubtitle: movie.hasSubtitle || movie.hasKurdishSub,
           subtitle_url: movie.subtitleKurdish
         };
       },
