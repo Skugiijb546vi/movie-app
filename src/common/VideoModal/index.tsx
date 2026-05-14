@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { m, AnimatePresence } from "framer-motion";
-import { IoMdClose, IoMdSettings, IoMdPlay, IoMdPause, IoMdFullscreen } from "react-icons/io";
+import { IoMdClose, IoMdSettings, IoMdPlay, IoMdPause, IoMdExpand } from "react-icons/io";
 
 import { initializeApp } from "firebase/app";
 import { getDatabase, ref, get, update } from "firebase/database";
@@ -298,53 +298,47 @@ const VideoModal = () => {
                   )}
                 </video>
 
-                {/* باگراوەندی ڕەش بۆ ژێر کۆنتڕۆڵەکان */}
                 <div className={`absolute inset-0 bg-gradient-to-b from-black/70 via-transparent to-black/80 pointer-events-none transition-opacity duration-300 ${showControls || !isPlaying ? "opacity-100" : "opacity-0"}`}></div>
 
-                {/* کۆنتڕۆڵەکان */}
                 <div className={`absolute inset-0 flex flex-col justify-between p-4 sm:p-6 transition-opacity duration-300 ${showControls || !isPlaying ? "opacity-100" : "opacity-0"}`}>
                   
-                  {/* بەشی سەرەوە (داخستن و ناوی فیلم) */}
                   <div className="flex items-center justify-between z-40">
                     <button onClick={closeModal} className="bg-white/10 hover:bg-red-600 backdrop-blur-md p-2 rounded-full text-white transition">
                       <IoMdClose size={24} />
                     </button>
                     <h2 className="text-white font-bold text-lg drop-shadow-md">{fbData?.title || "Sebar TV"}</h2>
-                    <div className="w-10 h-10"></div> {/* بۆ باڵانسی شاشەکە */}
+                    <div className="w-10 h-10"></div> 
                   </div>
 
-                  {/* نیشانەی لۆدین (گەر پێویست بوو) */}
                   {isBuffering && (
                     <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none z-30">
                       <div className="w-16 h-16 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
                     </div>
                   )}
 
-                  {/* بەشی ناوەڕاست (دوگمە گەورەکانی ئەندرۆید) */}
                   <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex items-center gap-6 sm:gap-12 z-40">
-                    <button onClick={() => skipTime(-10)} className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 flex flex-col items-center justify-center text-white backdrop-blur-sm transition">
+                    <button onClick={(e) => { e.stopPropagation(); skipTime(-10); }} className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 flex flex-col items-center justify-center text-white backdrop-blur-sm transition">
                       <span className="text-xs sm:text-sm font-bold">-10</span>
                     </button>
                     
-                    <button onClick={togglePlay} className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-red-600/90 hover:bg-red-500 border-2 border-red-400/50 flex items-center justify-center text-white shadow-[0_0_20px_rgba(229,9,20,0.6)] transition transform hover:scale-105">
+                    <button onClick={(e) => { e.stopPropagation(); togglePlay(); }} className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-red-600/90 hover:bg-red-500 border-2 border-red-400/50 flex items-center justify-center text-white shadow-[0_0_20px_rgba(229,9,20,0.6)] transition transform hover:scale-105">
                       {isPlaying ? <IoMdPause size={36} /> : <IoMdPlay size={36} className="ml-1" />}
                     </button>
 
-                    <button onClick={() => skipTime(10)} className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 flex flex-col items-center justify-center text-white backdrop-blur-sm transition">
+                    <button onClick={(e) => { e.stopPropagation(); skipTime(10); }} className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 flex flex-col items-center justify-center text-white backdrop-blur-sm transition">
                       <span className="text-xs sm:text-sm font-bold">+10</span>
                     </button>
                   </div>
 
-                  {/* بەشی خوارەوە (سڵایدەر و ڕێکخستنەکان) */}
                   <div className="flex flex-col gap-3 z-40 w-full mt-auto">
                     <div className="flex items-center justify-between px-2">
                       <span className="text-white text-xs sm:text-sm font-medium drop-shadow-md">{formatTime(currentTime)} / {formatTime(duration)}</span>
                       <div className="flex gap-4">
-                        <button onClick={() => setShowSettings(!showSettings)} className="text-white hover:text-red-500 transition">
+                        <button onClick={(e) => { e.stopPropagation(); setShowSettings(!showSettings); }} className="text-white hover:text-red-500 transition">
                           <IoMdSettings size={22} />
                         </button>
-                        <button onClick={toggleFullScreen} className="text-white hover:text-red-500 transition">
-                          <IoMdFullscreen size={24} />
+                        <button onClick={(e) => { e.stopPropagation(); toggleFullScreen(); }} className="text-white hover:text-red-500 transition">
+                          <IoMdExpand size={24} />
                         </button>
                       </div>
                     </div>
@@ -355,6 +349,7 @@ const VideoModal = () => {
                       max={duration || 100}
                       value={currentTime}
                       onChange={handleSeek}
+                      onClick={(e) => e.stopPropagation()}
                       className="w-full h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer"
                       style={{
                         background: `linear-gradient(to right, #E50914 ${(currentTime / duration) * 100}%, rgba(255,255,255,0.3) ${(currentTime / duration) * 100}%)`
@@ -363,9 +358,8 @@ const VideoModal = () => {
                   </div>
                 </div>
 
-                {/* مێنیوی ڕێکخستنی ژێرنووس */}
                 {showSettings && (
-                  <div className="absolute bottom-24 right-4 sm:right-8 z-50 bg-[#141414]/95 border border-gray-700 p-5 rounded-2xl shadow-2xl w-72 text-right backdrop-blur-xl">
+                  <div className="absolute bottom-24 right-4 sm:right-8 z-50 bg-[#141414]/95 border border-gray-700 p-5 rounded-2xl shadow-2xl w-72 text-right backdrop-blur-xl" onClick={(e) => e.stopPropagation()}>
                     <div className="flex justify-between items-center mb-4 border-b border-gray-700 pb-2">
                       <button onClick={() => setShowSettings(false)} className="text-gray-400 hover:text-white"><IoMdClose size={20}/></button>
                       <h3 className="text-white font-bold text-lg">ژێرنووس</h3>
