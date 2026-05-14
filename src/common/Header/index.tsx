@@ -80,16 +80,23 @@ const Header = () => {
 
         <div className=" hidden md:flex flex-row gap-8 items-center text-gray-600 dark:text-gray-300">
           <ul className="flex flex-row gap-8 capitalize text-[14.75px] font-medium">
-            {navLinks.map((link: { title: string; path: string }) => {
-              return (
-                <HeaderNavItem
-                  key={link.title}
-                  link={link}
-                  isNotFoundPage={isNotFoundPage}
-                  showBg={isActive}
-                />
-              );
-            })}
+            {navLinks
+              // ئەم فلتەرە لێرەدا زیاد کرا بۆ ئەوەی بەشی زنجیرەکان پیشان نەدات
+              .filter(
+                (link) =>
+                  !link.title.toLowerCase().includes("tv") &&
+                  !link.title.toLowerCase().includes("series")
+              )
+              .map((link: { title: string; path: string }) => {
+                return (
+                  <HeaderNavItem
+                    key={link.title}
+                    link={link}
+                    isNotFoundPage={isNotFoundPage}
+                    showBg={isActive}
+                  />
+                );
+              })}
           </ul>
 
           <div className="button relative">
