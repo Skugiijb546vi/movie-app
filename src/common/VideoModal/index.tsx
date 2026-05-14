@@ -62,7 +62,7 @@ const VideoModal = () => {
           setFbData(snapshot.val());
         }
         setIsFetchingVideo(false);
-      }).catch((err) => {
+      }).catch(() => {
         setIsFetchingVideo(false);
       });
     }
@@ -131,11 +131,7 @@ const VideoModal = () => {
   const isVip = fbData?.badge_text === "VIP";
   const canPlayVideo = !isVip || isVipVerified;
   
-  // فێڵە سەرەکییەکە ڕێک لێرەدایە کە پێشتر بەکارمان هێنا!
-  const rawUrl = fbData?.url || fbData?.video_url || "";
-  // زیادکردنی بڕگەی ?download=true بۆ ئەوەی Hugging Face نەتوانێت بلۆکی بکات
-  const videoUrl = rawUrl ? `${rawUrl}?download=true#.mp4` : ""; 
-  
+  const videoUrl = fbData?.url || fbData?.video_url || "";
   const posterImage = fbData?.image || movieData?.poster_path || "";
 
   return (
@@ -168,16 +164,16 @@ const VideoModal = () => {
                 <p className="text-red-500 text-xl font-bold">ببورە، لینکی ئەم فیلمە لەناو فایەربەیس نەدۆزرایەوە!</p>
               </div>
             ) : canPlayVideo ? (
+              {/* لێرەدا کێشەکەمان بەتەواوی چارەسەر کرد: نە جۆری ڤیدیۆکە دیاری دەکەین، نە هیچ کۆتاییەکی زیاد دەکەین. با براوزەرەکە خۆی دایبگرێت و تێبگات کە ڤیدیۆیە */}
               <video
                 key={videoUrl}
+                src={videoUrl}
                 controls
                 autoPlay
                 playsInline
                 className="w-full h-full bg-black object-contain outline-none"
                 poster={posterImage?.startsWith("http") ? posterImage : `https://image.tmdb.org/t/p/original/${posterImage}`}
               >
-                <source src={videoUrl} type="video/mp4" />
-                
                 {fbData?.hasSubtitle && localSubtitle && (
                   <track
                     label="کوردی"
