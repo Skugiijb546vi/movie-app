@@ -25,7 +25,7 @@ const Logo: React.FC<logoProps> = ({
     <span
       className={cn(logoColor,`font-semibold sm:text-[18px] text-[16.75px]`)}
     >
-      tMovies
+      SEBAR Tv
     </span>
   </Link>
 );
