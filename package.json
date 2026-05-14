@@ -6,13 +6,14 @@
   "author": "Sudeep Mahato",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "vite build",
     "preview": "vite preview"
   },
   "dependencies": {
     "@ctrl/react-adsense": "^1.8.0",
     "@reduxjs/toolkit": "^1.9.2",
     "clsx": "^2.1.0",
+    "firebase": "^10.8.1",
     "framer-motion": "^11.0.5",
     "lodash.throttle": "^4.1.1",
     "react": "^18.2.0",
