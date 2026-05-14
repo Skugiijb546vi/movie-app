@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { m, AnimatePresence } from "framer-motion";
 import { IoMdClose } from "react-icons/io";
 
-// هێنانی فایەربەیس بۆ پشکنینی کلیلەکان
+// هێنانی فایەربەیس
 import { initializeApp } from "firebase/app";
 import { getDatabase, ref, get, update } from "firebase/database";
 
@@ -29,13 +29,15 @@ const db = getDatabase(app);
 const VideoModal = () => {
   const { videoId: movieData, closeModal, isModalOpen } = useGlobalContext();
   const { zoomIn } = useMotion();
-  
+
   const [keyInput, setKeyInput] = useState("");
   const [isVipVerified, setIsVipVerified] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingVip, setIsLoadingVip] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
-  
-  // دۆخێکی نوێ بۆ هێنان و ئامادەکردنی ژێرنووسەکە بەبێ کێشە
+
+  // دۆخە نوێیەکان بۆ هێنانی زانیاری ڕاستەوخۆ لە فایەربەیسەوە
+  const [fbData, setFbData] = useState(null);
+  const [isFetchingVideo, setIsFetchingVideo] = useState(true);
   const [localSubtitle, setLocalSubtitle] = useState("");
 
   const { ref: modalRef } = useOnClickOutside({
@@ -49,14 +51,30 @@ const VideoModal = () => {
     enable: isModalOpen
   });
 
+  // کاتێک پەنجەرەکە دەکرێتەوە، دەچێت لە فایەربەیس ڤیدیۆکە دەهێنێت
   useEffect(() => {
-    if (!isModalOpen) {
-      setIsVipVerified(false);
-      setKeyInput("");
-      setErrorMsg("");
+    if (isModalOpen && movieData?.id) {
+      setIsFetchingVideo(true);
+      setFbData(null);
       setLocalSubtitle("");
+      setIsVipVerified(false);
+      setErrorMsg("");
+
+      // گەڕان لەناو فۆڵدەری np لە فایەربەیسەکەت بەپێی ئایدی فیلمەکە
+      const videoRef = ref(db, `np/${movieData.id}`);
+      get(videoRef).then((snapshot) => {
+        if (snapshot.exists()) {
+          setFbData(snapshot.val()); // ڤیدیۆکە دۆزرایەوە!
+        } else {
+          console.log("ئەم فیلمە لەناو فایەربەیس داناپێدراوە");
+        }
+        setIsFetchingVideo(false);
+      }).catch((err) => {
+        console.error("کێشە لە هێنانی فایەربەیس:", err);
+        setIsFetchingVideo(false);
+      });
     }
-  }, [isModalOpen]);
+  }, [isModalOpen, movieData]);
 
   useEffect(() => {
     const body = document.body;
@@ -77,12 +95,26 @@ const VideoModal = () => {
     }
   }, [isModalOpen]);
 
+  // هێنانی ژێرنووسە کوردییەکە ئەگەر هەبوو
+  useEffect(() => {
+    const subUrl = fbData?.subtitleKurdish || fbData?.subtitle_url || "";
+    if (subUrl) {
+      fetch(subUrl)
+        .then((res) => res.text())
+        .then((text) => {
+          const blob = new Blob([text], { type: "text/vtt" });
+          setLocalSubtitle(URL.createObjectURL(blob));
+        })
+        .catch((err) => console.error("کێشەی ژێرنووس:", err));
+    }
+  }, [fbData]);
+
   const verifyVipKey = async () => {
     if (!keyInput.trim()) {
       setErrorMsg("تکایە کلیلەکە داخڵ بکە!");
       return;
     }
-    setIsLoading(true);
+    setIsLoadingVip(true);
     setErrorMsg("");
     try {
       const keyRef = ref(db, `activation_keys/${keyInput}`);
@@ -101,29 +133,15 @@ const VideoModal = () => {
     } catch (error) {
       setErrorMsg("کێشەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەر.");
     } finally {
-      setIsLoading(false);
+      setIsLoadingVip(false);
     }
   };
 
-  const isVip = movieData?.badge_text === "VIP";
+  // دیاریکردنی جۆری ڤیدیۆکە بەپێی داتای فایەربەیس
+  const isVip = fbData?.badge_text === "VIP";
   const canPlayVideo = !isVip || isVipVerified;
-  
-  const videoUrl = movieData?.url || movieData?.video_url || "";
-  const subtitleUrl = movieData?.subtitleKurdish || movieData?.subtitle_url || "";
-  const posterImage = movieData?.image || movieData?.poster_path || "";
-
-  // هێنانی ژێرنووسەکە پێشوەختە بۆ ئەوەی کێشەی (CORS) دروست نەکات
-  useEffect(() => {
-    if (canPlayVideo && subtitleUrl) {
-      fetch(subtitleUrl)
-        .then((res) => res.text())
-        .then((text) => {
-          const blob = new Blob([text], { type: "text/vtt" });
-          setLocalSubtitle(URL.createObjectURL(blob));
-        })
-        .catch((err) => console.error("کێشە هەیە لە هێنانی ژێرنووسەکە:", err));
-    }
-  }, [canPlayVideo, subtitleUrl]);
+  const videoUrl = fbData?.url || fbData?.video_url || "";
+  const posterImage = fbData?.image || movieData?.poster_path || "";
 
   return (
     <AnimatePresence>
@@ -145,8 +163,16 @@ const VideoModal = () => {
               <IoMdClose size={24} />
             </button>
 
-            {canPlayVideo ? (
-              // تێبینی: بەتەواوی وشەی crossOrigin مان سڕییەوە لێرە
+            {isFetchingVideo ? (
+              <div className="flex items-center justify-center h-full w-full bg-black">
+                <p className="text-white text-xl animate-pulse">لە هێنانی ڤیدیۆکەداین...</p>
+              </div>
+            ) : !videoUrl ? (
+              <div className="flex flex-col items-center justify-center h-full w-full bg-black">
+                <span className="text-red-500 text-5xl mb-4">⚠️</span>
+                <p className="text-red-500 text-xl font-bold">ببورە، لینکی ئەم فیلمە لەناو فایەربەیس نەدۆزرایەوە!</p>
+              </div>
+            ) : canPlayVideo ? (
               <video
                 key={videoUrl}
                 controls
@@ -156,7 +182,7 @@ const VideoModal = () => {
                 poster={posterImage?.startsWith("http") ? posterImage : `https://image.tmdb.org/t/p/original/${posterImage}`}
               >
                 <source src={videoUrl} type="video/mp4" />
-                {movieData?.hasSubtitle && localSubtitle && (
+                {fbData?.hasSubtitle && localSubtitle && (
                   <track
                     label="کوردی"
                     kind="subtitles"
@@ -174,7 +200,7 @@ const VideoModal = () => {
                 </div>
                 <h2 className="text-2xl font-bold text-white mb-2">فیلمی VIP</h2>
                 <p className="text-gray-400 text-sm mb-6">بۆ سەیرکردنی ئەم فیلمە پێویستت بە کلیلی چالاککردنە.</p>
-                
+
                 <input
                   type="text"
                   value={keyInput}
@@ -182,15 +208,15 @@ const VideoModal = () => {
                   placeholder="کلیلەکە لێرە بنووسە..."
                   className="w-full max-w-sm bg-gray-800 border border-gray-700 text-white p-3 mb-2 rounded-lg focus:outline-none focus:border-red-500 text-center text-lg uppercase transition"
                 />
-                
+
                 {errorMsg && <p className="text-red-500 text-sm mb-4">{errorMsg}</p>}
-                
+
                 <button
                   onClick={verifyVipKey}
-                  disabled={isLoading}
+                  disabled={isLoadingVip}
                   className="mt-4 bg-red-600 max-w-sm w-full py-3 rounded-lg font-bold text-white hover:bg-red-700 transition disabled:opacity-50 shadow-lg"
                 >
-                  {isLoading ? "چاوەڕێ بە..." : "سەلماندن و سەیرکردن"}
+                  {isLoadingVip ? "چاوەڕێ بە..." : "سەلماندن و سەیرکردن"}
                 </button>
               </div>
             )}
