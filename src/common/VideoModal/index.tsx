@@ -131,7 +131,11 @@ const VideoModal = () => {
   const isVip = fbData?.badge_text === "VIP";
   const canPlayVideo = !isVip || isVipVerified;
   
-  const videoUrl = fbData?.url || fbData?.video_url || "";
+  // لێرەدا کڵاودفلێر ۆرکەرەکەمان بەکارهێناوە کە دروستت کرد
+  const rawUrl = fbData?.url || fbData?.video_url || "";
+  const WORKER_URL = "https://videoproxy.sarkotiktok36.workers.dev/?url=";
+  const videoUrl = rawUrl ? `${WORKER_URL}${encodeURIComponent(rawUrl)}` : "";
+  
   const posterImage = fbData?.image || movieData?.poster_path || "";
 
   return (
@@ -172,7 +176,6 @@ const VideoModal = () => {
                 className="w-full h-full bg-black object-contain outline-none"
                 poster={posterImage?.startsWith("http") ? posterImage : `https://image.tmdb.org/t/p/original/${posterImage}`}
               >
-                {/* ئەمە ئەو دێڕە جادووییەیە کە براوزەر ناچار دەکات فایلە safetensorsـەکە وەک mp4 بخوێنێتەوە */}
                 <source src={videoUrl} type="video/mp4" />
                 
                 {fbData?.hasSubtitle && localSubtitle && (
