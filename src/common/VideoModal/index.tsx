@@ -38,7 +38,7 @@ const VideoModal = () => {
 
   const videoRef = useRef(null);
   const containerRef = useRef(null);
-  const controlsTimeoutRef = useRef(null);
+  // لێرەدا controlsTimeoutRef-م سڕییەوە چونکە بیڵدەکەی تێک دابوو (Unused variable)
 
   const [keyInput, setKeyInput] = useState("");
   const [isVipVerified, setIsVipVerified] = useState(false);
@@ -159,13 +159,13 @@ const VideoModal = () => {
     }
   };
 
-  // فوڵکردنی شاشە و سووڕان بۆ Landscape بە شێوەی ئۆتۆماتیکی
+  // فوڵکردنی شاشە و سووڕان بۆ Landscape - لێرەدا window.screen-مان بەکارهێنا بۆ ئەوەی بیڵدەکە کار بکات
   const toggleFullScreen = (e) => {
     e.stopPropagation();
     if (!document.fullscreenElement) {
       containerRef.current?.requestFullscreen().then(() => {
-        if (screen.orientation && screen.orientation.lock) {
-          screen.orientation.lock("landscape").catch((err) => {
+        if (window.screen.orientation && window.screen.orientation.lock) {
+          window.screen.orientation.lock("landscape").catch((err) => {
             console.log("Orientation lock failed: ", err);
           });
         }
@@ -273,7 +273,7 @@ const VideoModal = () => {
             {isFetchingVideo ? (
               <div className="flex flex-col items-center justify-center h-full w-full bg-[#0a0a0a]">
                 <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin mb-4"></div>
-                <p className="text-gray-300 font-semibold text-lg animate-pulse">لە هێنان داین...</p>
+                <p className="text-gray-300 font-semibold text-lg animate-pulse">لە کردنەوە داین...</p>
               </div>
             ) : !videoUrl ? (
               <div className="flex flex-col items-center justify-center h-full w-full bg-[#0a0a0a] relative">
@@ -299,7 +299,7 @@ const VideoModal = () => {
                   onPlaying={() => { setIsPlaying(true); setIsBuffering(false); }}
                   onPause={() => setIsPlaying(false)}
                   onWaiting={() => setIsBuffering(true)}
-                  className="w-full h-full object-contain outline-none cursor-pointer pointer-events-none"
+                  className="w-full h-full object-contain outline-none cursor-pointer"
                   poster={posterImage?.startsWith("http") ? posterImage : `https://image.tmdb.org/t/p/original/${posterImage}`}
                 >
                   {fbData?.hasSubtitle && localSubtitle && (
