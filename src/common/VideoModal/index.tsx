@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { m, AnimatePresence } from "framer-motion";
 import { IoMdClose } from "react-icons/io";
 
-// هێنانی فایەربەیس
 import { initializeApp } from "firebase/app";
 import { getDatabase, ref, get, update } from "firebase/database";
 
@@ -12,7 +11,6 @@ import { useOnClickOutside } from "@/hooks/useOnClickOutside";
 import { useMotion } from "@/hooks/useMotion";
 import { useOnKeyPress } from "@/hooks/useOnKeyPress";
 
-// زانیارییەکانی فایەربەیسەکەی خۆت
 const firebaseConfig = {
   apiKey: "AIzaSyAn-U4aTP5LwHf9cIOdPAXp4fCMzYyrDV8",
   authDomain: "sebartv-efccb.firebaseapp.com",
@@ -35,7 +33,6 @@ const VideoModal = () => {
   const [isLoadingVip, setIsLoadingVip] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
-  // دۆخە نوێیەکان بۆ هێنانی زانیاری ڕاستەوخۆ لە فایەربەیسەوە
   const [fbData, setFbData] = useState(null);
   const [isFetchingVideo, setIsFetchingVideo] = useState(true);
   const [localSubtitle, setLocalSubtitle] = useState("");
@@ -51,7 +48,6 @@ const VideoModal = () => {
     enable: isModalOpen
   });
 
-  // کاتێک پەنجەرەکە دەکرێتەوە، دەچێت لە فایەربەیس ڤیدیۆکە دەهێنێت
   useEffect(() => {
     if (isModalOpen && movieData?.id) {
       setIsFetchingVideo(true);
@@ -60,17 +56,13 @@ const VideoModal = () => {
       setIsVipVerified(false);
       setErrorMsg("");
 
-      // گەڕان لەناو فۆڵدەری np لە فایەربەیسەکەت بەپێی ئایدی فیلمەکە
       const videoRef = ref(db, `np/${movieData.id}`);
       get(videoRef).then((snapshot) => {
         if (snapshot.exists()) {
-          setFbData(snapshot.val()); // ڤیدیۆکە دۆزرایەوە!
-        } else {
-          console.log("ئەم فیلمە لەناو فایەربەیس داناپێدراوە");
+          setFbData(snapshot.val());
         }
         setIsFetchingVideo(false);
       }).catch((err) => {
-        console.error("کێشە لە هێنانی فایەربەیس:", err);
         setIsFetchingVideo(false);
       });
     }
@@ -95,7 +87,6 @@ const VideoModal = () => {
     }
   }, [isModalOpen]);
 
-  // هێنانی ژێرنووسە کوردییەکە ئەگەر هەبوو
   useEffect(() => {
     const subUrl = fbData?.subtitleKurdish || fbData?.subtitle_url || "";
     if (subUrl) {
@@ -105,7 +96,7 @@ const VideoModal = () => {
           const blob = new Blob([text], { type: "text/vtt" });
           setLocalSubtitle(URL.createObjectURL(blob));
         })
-        .catch((err) => console.error("کێشەی ژێرنووس:", err));
+        .catch(() => {});
     }
   }, [fbData]);
 
@@ -137,10 +128,13 @@ const VideoModal = () => {
     }
   };
 
-  // دیاریکردنی جۆری ڤیدیۆکە بەپێی داتای فایەربەیس
   const isVip = fbData?.badge_text === "VIP";
   const canPlayVideo = !isVip || isVipVerified;
-  const videoUrl = fbData?.url || fbData?.video_url || "";
+  
+  // فێڵەکە ڕێک لێرەدایە! پاشگرێکی mp4 دەخەینە کۆتایی لینکەکەوە بۆ هەڵخەڵەتاندنی براوزەر
+  const rawUrl = fbData?.url || fbData?.video_url || "";
+  const videoUrl = rawUrl ? `${rawUrl}#.mp4` : ""; 
+  
   const posterImage = fbData?.image || movieData?.poster_path || "";
 
   return (
@@ -157,7 +151,7 @@ const VideoModal = () => {
           >
             <button
               type="button"
-              className="absolute -right-0 -top-0 bg-red-600 hover:bg-red-700 p-2 text-white z-50 rounded-bl-xl transition"
+              className="absolute -right-0 -top-0 bg-red-600 hover:bg-red-700 p-2 text-white z-50 rounded-bl-xl transition z-50"
               onClick={closeModal}
             >
               <IoMdClose size={24} />
@@ -181,7 +175,9 @@ const VideoModal = () => {
                 className="w-full h-full bg-black object-contain outline-none"
                 poster={posterImage?.startsWith("http") ? posterImage : `https://image.tmdb.org/t/p/original/${posterImage}`}
               >
+                {/* پێدانی لینکەکە بە جۆرێک کە براوزەر ڕەتی نەکاتەوە */}
                 <source src={videoUrl} type="video/mp4" />
+                
                 {fbData?.hasSubtitle && localSubtitle && (
                   <track
                     label="کوردی"
@@ -194,7 +190,7 @@ const VideoModal = () => {
                 براوزەرەکەت پشتگیری ڤیدیۆ ناکات.
               </video>
             ) : (
-              <div className="flex flex-col items-center justify-center h-full p-6 text-center">
+              <div className="flex flex-col items-center justify-center h-full p-6 text-center relative z-40">
                 <div className="w-16 h-16 bg-yellow-500/20 text-yellow-500 rounded-full flex items-center justify-center mb-4">
                   <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
                 </div>
