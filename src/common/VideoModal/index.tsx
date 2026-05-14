@@ -76,20 +76,15 @@ const VideoModal = () => {
 
   useEffect(() => {
     if (isModalOpen && movieData?.id !== undefined) {
-      // ١. کاتێک فیلمێکی نوێ دەکرێتەوە، با هەموو شتێک خاوێن بکرێتەوە و کاتەکە ببێتە سفر
       setIsFetchingVideo(true);
       setFbData(null);
       setLocalSubtitle("");
       setIsVipVerified(false);
       setErrorMsg("");
-      setCurrentTime(0); // سفرکردنەوەی کات
+      setCurrentTime(0); 
       setDuration(0);
       setIsBuffering(true);
       setIsPlaying(true);
-      
-      if (videoRef.current) {
-        videoRef.current.currentTime = 0; // بەزۆر سفرکردنەوەی پلەیەرەکە
-      }
 
       const videoRefFb = ref(db, `np/${movieData.id}`);
       get(videoRefFb).then((snapshot) => {
@@ -97,7 +92,6 @@ const VideoModal = () => {
         setIsFetchingVideo(false);
       }).catch(() => setIsFetchingVideo(false));
     } else {
-      // کاتێک مۆداڵەکە دادەخرێت کاتەکە سفر دەکەینەوە بۆ ئەوەی جارێکی تر تێکەڵ نەبێت
       setCurrentTime(0);
       setDuration(0);
     }
@@ -169,13 +163,9 @@ const VideoModal = () => {
     if (!document.fullscreenElement) {
       containerRef.current?.requestFullscreen().then(() => {
         if (window.screen.orientation && window.screen.orientation.lock) {
-          window.screen.orientation.lock("landscape").catch((err) => {
-            console.log("Orientation lock failed: ", err);
-          });
+          window.screen.orientation.lock("landscape").catch(() => {});
         }
-      }).catch((err) => {
-        console.log("Fullscreen failed: ", err);
-      });
+      }).catch(() => {});
     } else {
       document.exitFullscreen();
     }
@@ -292,19 +282,13 @@ const VideoModal = () => {
               >
                 <video
                   ref={videoRef}
-                  // تێبینی گرنگ: لێرەدا key={videoUrl} لابراوە بۆ ئەوەی خێرایی پلەیەرەکە بگەڕێتەوە باری ئاسایی ⚡
+                  key={videoUrl} // <--- ئەمەم هێنایەوە، ڕێک ئەمە هۆکاری خێرا لۆدبوونەکەیە ⚡
                   src={videoUrl}
                   autoPlay
                   playsInline
                   controlsList="nodownload" 
                   onTimeUpdate={() => setCurrentTime(videoRef.current?.currentTime || 0)}
-                  onLoadedMetadata={() => {
-                    setDuration(videoRef.current?.duration || 0);
-                    // کاتێک ڤیدیۆکە لۆد دەبێت ڕاستەوخۆ دەیهێنینەوە سەر سفر
-                    if (videoRef.current) {
-                      videoRef.current.currentTime = 0;
-                    }
-                  }}
+                  onLoadedMetadata={() => setDuration(videoRef.current?.duration || 0)}
                   onPlaying={() => { setIsPlaying(true); setIsBuffering(false); }}
                   onPause={() => setIsPlaying(false)}
                   onWaiting={() => setIsBuffering(true)}
@@ -410,11 +394,9 @@ const VideoModal = () => {
                 )}
               </div>
             ) : (
-              // دیزاینە زێڕینە نوێیەکە ✨
               <div className="flex flex-col items-center justify-center h-full p-4 w-full bg-black/85 relative">
                 <div className="bg-gradient-to-b from-[#3a0606] to-[#1a0202] border-[2.5px] border-[#FFD700] rounded-[2rem] p-6 sm:p-8 w-full max-w-[420px] flex flex-col items-center shadow-[0_0_35px_rgba(255,215,0,0.25)] relative z-10">
                   
-                  {/* ئایکۆنی خەڵاتە زێڕینە درەوشاوەکە */}
                   <div className="mb-4 text-[#FFD700] drop-shadow-[0_0_18px_rgba(255,215,0,0.9)]">
                     <FaAward size={75} />
                   </div>
@@ -440,7 +422,6 @@ const VideoModal = () => {
 
                   {errorMsg && <p className="text-red-400 text-sm mb-4 text-center font-medium bg-red-900/30 py-2 px-3 rounded-lg w-full border border-red-800/50">{errorMsg}</p>}
 
-                  {/* دوگمەی سەوزە درەوشاوەکە */}
                   <button
                     onClick={verifyVipKey}
                     disabled={isLoadingVip}
@@ -453,7 +434,6 @@ const VideoModal = () => {
                     )}
                   </button>
 
-                  {/* دوگمەی زەردە زێڕینەکە */}
                   <a
                     href="https://t.me/sarkoakram"
                     target="_blank"
