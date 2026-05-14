@@ -75,18 +75,31 @@ const VideoModal = () => {
   });
 
   useEffect(() => {
-    if (isModalOpen && movieData?.id) {
+    if (isModalOpen && movieData?.id !== undefined) {
+      // ١. کاتێک فیلمێکی نوێ دەکرێتەوە، با هەموو شتێک خاوێن بکرێتەوە و کاتەکە ببێتە سفر
       setIsFetchingVideo(true);
       setFbData(null);
       setLocalSubtitle("");
       setIsVipVerified(false);
       setErrorMsg("");
+      setCurrentTime(0); // سفرکردنەوەی کات
+      setDuration(0);
+      setIsBuffering(true);
+      setIsPlaying(true);
+      
+      if (videoRef.current) {
+        videoRef.current.currentTime = 0; // بەزۆر سفرکردنەوەی پلەیەرەکە
+      }
 
       const videoRefFb = ref(db, `np/${movieData.id}`);
       get(videoRefFb).then((snapshot) => {
         if (snapshot.exists()) setFbData(snapshot.val());
         setIsFetchingVideo(false);
       }).catch(() => setIsFetchingVideo(false));
+    } else {
+      // کاتێک مۆداڵەکە دادەخرێت کاتەکە سفر دەکەینەوە بۆ ئەوەی جارێکی تر تێکەڵ نەبێت
+      setCurrentTime(0);
+      setDuration(0);
     }
   }, [isModalOpen, movieData]);
 
@@ -279,13 +292,19 @@ const VideoModal = () => {
               >
                 <video
                   ref={videoRef}
-                  key={videoUrl}
+                  // تێبینی گرنگ: لێرەدا key={videoUrl} لابراوە بۆ ئەوەی خێرایی پلەیەرەکە بگەڕێتەوە باری ئاسایی ⚡
                   src={videoUrl}
                   autoPlay
                   playsInline
                   controlsList="nodownload" 
                   onTimeUpdate={() => setCurrentTime(videoRef.current?.currentTime || 0)}
-                  onLoadedMetadata={() => setDuration(videoRef.current?.duration || 0)}
+                  onLoadedMetadata={() => {
+                    setDuration(videoRef.current?.duration || 0);
+                    // کاتێک ڤیدیۆکە لۆد دەبێت ڕاستەوخۆ دەیهێنینەوە سەر سفر
+                    if (videoRef.current) {
+                      videoRef.current.currentTime = 0;
+                    }
+                  }}
                   onPlaying={() => { setIsPlaying(true); setIsBuffering(false); }}
                   onPause={() => setIsPlaying(false)}
                   onWaiting={() => setIsBuffering(true)}
@@ -391,60 +410,60 @@ const VideoModal = () => {
                 )}
               </div>
             ) : (
-              // دیزاینە نوێیەکە ڕێک بەپێی وێنەی ئەپەکە بە ڕەنگە سادە و جوانەکانییەوە 
-              <div className="flex flex-col items-center justify-center h-full p-4 w-full bg-black/90 relative">
-                <div className="bg-[#510c0c] border-2 border-[#fbc02d] rounded-[24px] p-6 sm:p-8 w-full max-w-[400px] flex flex-col items-center shadow-2xl relative z-10">
+              // دیزاینە زێڕینە نوێیەکە ✨
+              <div className="flex flex-col items-center justify-center h-full p-4 w-full bg-black/85 relative">
+                <div className="bg-gradient-to-b from-[#3a0606] to-[#1a0202] border-[2.5px] border-[#FFD700] rounded-[2rem] p-6 sm:p-8 w-full max-w-[420px] flex flex-col items-center shadow-[0_0_35px_rgba(255,215,0,0.25)] relative z-10">
                   
-                  {/* ئایکۆنی باجە زێڕینەکە */}
-                  <div className="mb-3 text-[#fbc02d]">
-                    <FaAward size={70} />
+                  {/* ئایکۆنی خەڵاتە زێڕینە درەوشاوەکە */}
+                  <div className="mb-4 text-[#FFD700] drop-shadow-[0_0_18px_rgba(255,215,0,0.9)]">
+                    <FaAward size={75} />
                   </div>
 
-                  <h2 className="text-white text-lg sm:text-xl font-bold mb-2 text-center">
+                  <h2 className="text-white text-xl sm:text-2xl font-bold mb-3 text-center leading-relaxed drop-shadow-md">
                     بۆ بینی ئەم فلمە تکایە سەرەتا تکتێکی سینەما بکڕە
                   </h2>
                   
-                  <p className="text-gray-300 text-xs sm:text-sm mb-6 text-center">
+                  <p className="text-gray-400 text-xs sm:text-sm mb-6 text-center">
                     VIP تەنها خاوەن تکتەکان دەتوانن سەیری ناوەڕۆکی بکەن.
                   </p>
 
-                  <div className="w-full mb-2">
+                  <div className="w-full mb-4">
                     <input
                       type="text"
                       value={keyInput}
                       onChange={(e) => setKeyInput(e.target.value)}
                       placeholder="...کلیلەکە لێرە بنووسە"
-                      className="w-full bg-[#240000] border border-[#3a0000] text-white placeholder-gray-500 p-4 rounded-xl focus:outline-none focus:border-[#fbc02d] text-right text-sm transition"
+                      className="w-full bg-[#170202] border border-[#8a1414] text-[#FFD700] placeholder-gray-500 p-4 rounded-xl focus:outline-none focus:border-[#FFD700] focus:ring-1 focus:ring-[#FFD700] text-right text-sm transition shadow-inner"
                       dir="rtl"
                     />
                   </div>
 
-                  {errorMsg && <p className="text-red-400 text-sm my-2 text-center font-medium">{errorMsg}</p>}
+                  {errorMsg && <p className="text-red-400 text-sm mb-4 text-center font-medium bg-red-900/30 py-2 px-3 rounded-lg w-full border border-red-800/50">{errorMsg}</p>}
 
-                  {/* دوگمەی سەوز */}
+                  {/* دوگمەی سەوزە درەوشاوەکە */}
                   <button
                     onClick={verifyVipKey}
                     disabled={isLoadingVip}
-                    className="w-full bg-[#2e7d32] hover:bg-[#1b5e20] text-white font-bold py-4 rounded-xl mt-4 mb-3 transition disabled:opacity-50 flex items-center justify-center gap-2"
+                    className="w-full bg-gradient-to-r from-[#22c55e] to-[#15803d] hover:from-[#16a34a] hover:to-[#14532d] text-white font-bold py-3.5 rounded-xl mb-3 transition disabled:opacity-50 flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(34,197,94,0.35)]"
                   >
                     {isLoadingVip ? (
                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                     ) : (
-                      <span>✨ چالاککردنی کلیل</span>
+                      <span className="text-lg">✨ چالاککردنی کلیل</span>
                     )}
                   </button>
 
-                  {/* دوگمەی زەرد بۆ تێلیگرام */}
+                  {/* دوگمەی زەردە زێڕینەکە */}
                   <a
                     href="https://t.me/sarkoakram"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full bg-[#fbc02d] hover:bg-[#f9a825] text-black font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition mb-4"
+                    className="w-full bg-gradient-to-r from-[#FDE047] via-[#EAB308] to-[#CA8A04] hover:brightness-110 text-black font-extrabold py-3.5 rounded-xl flex items-center justify-center gap-2 transition mb-4 shadow-[0_0_20px_rgba(234,179,8,0.5)]"
                   >
-                    <span>داواکردنی کلیل (تێلیگرام) ➤</span>
+                    <span className="text-lg">داواکردنی کلیل (تێلیگرام) ➤</span>
                   </a>
 
-                  <button onClick={closeModal} className="text-gray-400 hover:text-white text-sm transition mt-2">
+                  <button onClick={closeModal} className="text-gray-400 hover:text-white text-sm transition mt-1 font-medium">
                     داخستن
                   </button>
                 </div>
