@@ -92,8 +92,16 @@ const VideoModal = () => {
         setIsFetchingVideo(false);
       }).catch(() => setIsFetchingVideo(false));
     } else {
+      // ⚡ ڕێک لێرەدایە چارەسەرە سەرەکییەکە! ⚡
+      // کاتێک مۆداڵەکە دادەخەین، یەکسەر ڤیدیۆکە دەکوژێنینەوە بۆ ئەوەی ئینتەرنێتەکە گیر نەخوات
       setCurrentTime(0);
       setDuration(0);
+      setIsPlaying(false);
+      if (videoRef.current) {
+        videoRef.current.pause(); // ڤیدیۆکە دەوەستێنین
+        videoRef.current.removeAttribute('src'); // لینکەکەی لێ دەکەینەوە بۆ ئەوەی داونلۆد نەکات لە باگراوەنددا
+        videoRef.current.load(); // پلەیەرەکە ڕیفرێش دەکەینەوە
+      }
     }
   }, [isModalOpen, movieData]);
 
@@ -115,17 +123,13 @@ const VideoModal = () => {
     }
   }, [isModalOpen]);
 
-  // کێشەی ژێرنووسەکان لێرەدا بەتەواوی چارەسەر کرا ⚡
   useEffect(() => {
     const subUrl = fbData?.subtitleKurdish || fbData?.subtitle_url || "";
     if (subUrl) {
-      // دڵنیابوونەوە لەوەی لینکەکە https ی پێوەیە
       const finalUrl = subUrl.startsWith("http") ? subUrl : `https://${subUrl}`;
-
       fetch(finalUrl)
         .then((res) => res.text())
         .then((text) => {
-          // سڕینەوەی پیتە شاراوەکانی وەک BOM کە کێشە بۆ ژێرنووس دروست دەکەن
           const cleanText = text.replace(/^\uFEFF/, "").trimStart();
           const blob = new Blob([cleanText], { type: "text/vtt" });
           setLocalSubtitle(URL.createObjectURL(blob));
