@@ -59,6 +59,12 @@ const VideoModal = () => {
   const [subColor, setSubColor] = useState("#ffffff");
   const [subBg, setSubBg] = useState("rgba(0,0,0,0.75)");
 
+  // هێنانە سەرەوەی لینکەکان بۆ ئەوەی دوگمەی کوژانەوەکە بیبینێت
+  const rawUrl = fbData?.url || fbData?.video_url || "";
+  const WORKER_URL = "https://videoproxy.sarkotiktok36.workers.dev/?url=";
+  const videoUrl = rawUrl ? `${WORKER_URL}${encodeURIComponent(rawUrl)}` : "";
+  const posterImage = fbData?.image || movieData?.poster_path || "";
+
   const { ref: modalRef } = useOnClickOutside({
     action: () => {
       if (!document.fullscreenElement) closeModal();
@@ -73,6 +79,18 @@ const VideoModal = () => {
     },
     enable: isModalOpen
   });
+
+  // ⚡ دوگمەی کوژانەوە (Kill Switch): وا دەکات هەرگیز ئینتەرنێت گیر نەخوات ⚡
+  useEffect(() => {
+    const videoEl = videoRef.current;
+    return () => {
+      if (videoEl) {
+        videoEl.pause(); 
+        videoEl.removeAttribute("src"); // ڕاستەوخۆ لینکەکە لێ دەکاتەوە
+        videoEl.load(); // فەرمان بە براوزەر دەکات داونلۆدەکە بوەستێنێت
+      }
+    };
+  }, [videoUrl, isModalOpen]);
 
   useEffect(() => {
     if (isModalOpen && movieData?.id !== undefined) {
@@ -92,16 +110,9 @@ const VideoModal = () => {
         setIsFetchingVideo(false);
       }).catch(() => setIsFetchingVideo(false));
     } else {
-      // ⚡ ڕێک لێرەدایە چارەسەرە سەرەکییەکە! ⚡
-      // کاتێک مۆداڵەکە دادەخەین، یەکسەر ڤیدیۆکە دەکوژێنینەوە بۆ ئەوەی ئینتەرنێتەکە گیر نەخوات
       setCurrentTime(0);
       setDuration(0);
       setIsPlaying(false);
-      if (videoRef.current) {
-        videoRef.current.pause(); // ڤیدیۆکە دەوەستێنین
-        videoRef.current.removeAttribute('src'); // لینکەکەی لێ دەکەینەوە بۆ ئەوەی داونلۆد نەکات لە باگراوەنددا
-        videoRef.current.load(); // پلەیەرەکە ڕیفرێش دەکەینەوە
-      }
     }
   }, [isModalOpen, movieData]);
 
@@ -227,11 +238,6 @@ const VideoModal = () => {
 
   const isVip = fbData?.badge_text === "VIP";
   const canPlayVideo = !isVip || isVipVerified;
-  
-  const rawUrl = fbData?.url || fbData?.video_url || "";
-  const WORKER_URL = "https://videoproxy.sarkotiktok36.workers.dev/?url=";
-  const videoUrl = rawUrl ? `${WORKER_URL}${encodeURIComponent(rawUrl)}` : "";
-  const posterImage = fbData?.image || movieData?.poster_path || "";
 
   return (
     <AnimatePresence>
