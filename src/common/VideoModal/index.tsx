@@ -166,13 +166,15 @@ const VideoModal = () => {
             ) : canPlayVideo ? (
               <video
                 key={videoUrl}
-                src={videoUrl}
                 controls
                 autoPlay
                 playsInline
                 className="w-full h-full bg-black object-contain outline-none"
                 poster={posterImage?.startsWith("http") ? posterImage : `https://image.tmdb.org/t/p/original/${posterImage}`}
               >
+                {/* ئەمە ئەو دێڕە جادووییەیە کە براوزەر ناچار دەکات فایلە safetensorsـەکە وەک mp4 بخوێنێتەوە */}
+                <source src={videoUrl} type="video/mp4" />
+                
                 {fbData?.hasSubtitle && localSubtitle && (
                   <track
                     label="کوردی"
