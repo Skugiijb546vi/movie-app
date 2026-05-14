@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { m, AnimatePresence } from "framer-motion";
 import { IoMdClose } from "react-icons/io";
 
@@ -29,15 +29,14 @@ const db = getDatabase(app);
 const VideoModal = () => {
   const { videoId: movieData, closeModal, isModalOpen } = useGlobalContext();
   const { zoomIn } = useMotion();
-  const videoRef = useRef(null);
   
   const [keyInput, setKeyInput] = useState("");
   const [isVipVerified, setIsVipVerified] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   
-  // دۆخی نوێ بۆ نیشاندانی هۆکاری نەخوێندنەوەی ڤیدیۆکە
-  const [videoPlayError, setVideoPlayError] = useState("");
+  // دۆخێکی نوێ بۆ هێنان و ئامادەکردنی ژێرنووسەکە بەبێ کێشە
+  const [localSubtitle, setLocalSubtitle] = useState("");
 
   const { ref: modalRef } = useOnClickOutside({
     action: closeModal,
@@ -55,7 +54,7 @@ const VideoModal = () => {
       setIsVipVerified(false);
       setKeyInput("");
       setErrorMsg("");
-      setVideoPlayError(""); // خاوێنکردنەوەی ئیرۆرەکە کاتێک دادەخرێت
+      setLocalSubtitle("");
     }
   }, [isModalOpen]);
 
@@ -113,24 +112,18 @@ const VideoModal = () => {
   const subtitleUrl = movieData?.subtitleKurdish || movieData?.subtitle_url || "";
   const posterImage = movieData?.image || movieData?.poster_path || "";
 
-  // ئێرە ئەو فەنکشنەیە کە پێت دەڵێت بۆچی شاشەکە ڕەش دەبێت
-  const handleVideoError = (e) => {
-    const video = e.target;
-    const err = video.error;
-    if (err) {
-      let msg = "";
-      switch (err.code) {
-        case 1: msg = "پرۆسەی هێنان وەستێنرا لەلایەن براوزەرەوە."; break;
-        case 2: msg = "کێشەی ئینتەرنێت یان سێرڤەری (Hugging Face) وەڵام ناداتەوە."; break;
-        case 3: msg = "کێشە لە کۆدکردنی (Decode) ڤیدیۆکە هەیە."; break;
-        case 4: msg = "سێرڤەرەکە (Hugging Face) ڕێگە نادات ئەم فایلە وەک ڤیدیۆ لێبدرێت، یان فۆرماتەکەی نەناسراوە."; break;
-        default: msg = `کێشەیەکی نەزانراو: کۆدی ${err.code}`; break;
-      }
-      setVideoPlayError(msg);
-    } else {
-      setVideoPlayError("براوزەر ناتوانێت ئەم جۆرە فایلە ڕاستەوخۆ بخوێنێتەوە.");
+  // هێنانی ژێرنووسەکە پێشوەختە بۆ ئەوەی کێشەی (CORS) دروست نەکات
+  useEffect(() => {
+    if (canPlayVideo && subtitleUrl) {
+      fetch(subtitleUrl)
+        .then((res) => res.text())
+        .then((text) => {
+          const blob = new Blob([text], { type: "text/vtt" });
+          setLocalSubtitle(URL.createObjectURL(blob));
+        })
+        .catch((err) => console.error("کێشە هەیە لە هێنانی ژێرنووسەکە:", err));
     }
-  };
+  }, [canPlayVideo, subtitleUrl]);
 
   return (
     <AnimatePresence>
@@ -153,44 +146,27 @@ const VideoModal = () => {
             </button>
 
             {canPlayVideo ? (
-              // ئەگەر ئیرۆر هەبوو، کێشەکەت پێ دەڵێت نەک شاشەی ڕەش
-              videoPlayError ? (
-                <div className="w-full h-full flex flex-col items-center justify-center bg-gray-900 p-6 text-center text-white">
-                  <span className="text-red-500 text-5xl mb-4">⚠️</span>
-                  <h3 className="text-xl font-bold mb-2">ڤیدیۆکە کاری نەکرد</h3>
-                  <p className="text-gray-300 mb-4">{videoPlayError}</p>
-                  <div className="bg-black/50 p-3 rounded text-xs text-left max-w-full overflow-hidden break-all text-gray-400">
-                    <span className="text-white block mb-1">لینکی ڤیدیۆکە:</span>
-                    {videoUrl}
-                  </div>
-                  <a href={videoUrl} target="_blank" rel="noreferrer" className="mt-4 text-blue-400 hover:underline text-sm">
-                    لینکەکە لە پەنجەرەیەکی نوێ بکەرەوە
-                  </a>
-                </div>
-              ) : (
-                <video
-                  ref={videoRef}
-                  key={videoUrl}
-                  controls
-                  autoPlay
-                  playsInline
-                  onError={handleVideoError} // گرتنی کێشەکە لێرەدا
-                  className="w-full h-full bg-black object-contain outline-none"
-                  poster={posterImage?.startsWith("http") ? posterImage : `https://image.tmdb.org/t/p/original/${posterImage}`}
-                >
-                  <source src={videoUrl} type="video/mp4" />
-                  {movieData?.hasSubtitle && subtitleUrl && (
-                    <track
-                      label="کوردی"
-                      kind="subtitles"
-                      srcLang="ku"
-                      src={subtitleUrl}
-                      default
-                    />
-                  )}
-                  براوزەرەکەت پشتگیری ڤیدیۆ ناکات.
-                </video>
-              )
+              // تێبینی: بەتەواوی وشەی crossOrigin مان سڕییەوە لێرە
+              <video
+                key={videoUrl}
+                controls
+                autoPlay
+                playsInline
+                className="w-full h-full bg-black object-contain outline-none"
+                poster={posterImage?.startsWith("http") ? posterImage : `https://image.tmdb.org/t/p/original/${posterImage}`}
+              >
+                <source src={videoUrl} type="video/mp4" />
+                {movieData?.hasSubtitle && localSubtitle && (
+                  <track
+                    label="کوردی"
+                    kind="subtitles"
+                    srcLang="ku"
+                    src={localSubtitle}
+                    default
+                  />
+                )}
+                براوزەرەکەت پشتگیری ڤیدیۆ ناکات.
+              </video>
             ) : (
               <div className="flex flex-col items-center justify-center h-full p-6 text-center">
                 <div className="w-16 h-16 bg-yellow-500/20 text-yellow-500 rounded-full flex items-center justify-center mb-4">
