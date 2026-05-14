@@ -28,7 +28,6 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 const VideoModal = () => {
-  // وەرگرتنی داتای فیلمەکە
   const { videoId: movieData, closeModal, isModalOpen } = useGlobalContext();
   const { zoomIn } = useMotion();
   
@@ -106,15 +105,13 @@ const VideoModal = () => {
     }
   };
 
-  // پشکنینی ئایا ڤی ئای پییە
   const isVip = movieData?.badge_text === "VIP";
   const canPlayVideo = !isVip || isVipVerified;
   
-  // دۆزینەوەی لینکی ڤیدیۆکە، گرنگ نییە چ ناوێکت لە فایەربەیس بۆ داناوە
-  const videoUrl = movieData?.video_url || movieData?.custom_video_url || movieData?.movie_url || movieData?.video || (typeof movieData === 'string' ? movieData : "");
-  
-  // دۆزینەوەی لینکی ژێرنووس
-  const subtitleUrl = movieData?.subtitle_url || movieData?.subtitleKurdish || movieData?.subtitle;
+  // لێرەدا کێشەکەمان چارەسەر کرد، ئێستا لەناو فایەربەیس بەدوای "url" و "image" دا دەگەڕێت
+  const videoUrl = movieData?.url || movieData?.video_url || (typeof movieData === 'string' ? movieData : "");
+  const subtitleUrl = movieData?.subtitleKurdish || movieData?.subtitle_url;
+  const posterImage = movieData?.image || movieData?.poster_path;
 
   return (
     <AnimatePresence>
@@ -137,19 +134,15 @@ const VideoModal = () => {
             </button>
 
             {canPlayVideo ? (
-              // ڤیدیۆ پلەیەر
               <video
                 controls
                 autoPlay
                 crossOrigin="anonymous"
                 className="w-full h-full bg-black object-contain outline-none"
-                poster={movieData?.poster_path ? `https://image.tmdb.org/t/p/original/${movieData.poster_path}` : ""}
+                poster={posterImage?.startsWith("http") ? posterImage : `https://image.tmdb.org/t/p/original/${posterImage}`}
               >
-                {/* پێدانی لینکی ڤیدیۆکە */}
                 <source src={videoUrl} type="video/mp4" />
-                
-                {/* ئەگەر ژێرنووسی هەبوو */}
-                {subtitleUrl && (
+                {movieData?.hasSubtitle && subtitleUrl && (
                   <track
                     label="کوردی"
                     kind="subtitles"
@@ -161,7 +154,6 @@ const VideoModal = () => {
                 براوزەرەکەت پشتگیری ڤیدیۆ ناکات.
               </video>
             ) : (
-              // بەشی داخڵکردنی کلیلی VIP
               <div className="flex flex-col items-center justify-center h-full p-6 text-center">
                 <div className="w-16 h-16 bg-yellow-500/20 text-yellow-500 rounded-full flex items-center justify-center mb-4">
                   <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
