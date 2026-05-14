@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { m, AnimatePresence } from "framer-motion";
 import { IoMdClose, IoMdSettings, IoMdPlay, IoMdPause, IoMdExpand } from "react-icons/io";
-import { FaTelegramPlane, FaAward } from "react-icons/fa"; // ئایکۆنەکان لێرە زیاد کران
+import { FaTelegramPlane, FaAward } from "react-icons/fa";
 
 import { initializeApp } from "firebase/app";
 import { getDatabase, ref, get, update } from "firebase/database";
@@ -223,7 +223,7 @@ const VideoModal = () => {
   return (
     <AnimatePresence>
       {isModalOpen && (
-        <Overlay className="flex items-center justify-center backdrop-blur-md z-50">
+        <Overlay className="flex items-center justify-center backdrop-blur-sm z-50">
           <style>
             {`
               video::cue {
@@ -391,63 +391,60 @@ const VideoModal = () => {
                 )}
               </div>
             ) : (
-              // دیزاینە نوێیەکە ڕێک بەپێی وێنەکە
-              <div className="flex flex-col items-center justify-center h-full p-4 w-full bg-black/80 relative">
-                <div className="bg-[#4a0a0a] border-[3px] border-[#d4af37] rounded-[2rem] p-6 sm:p-8 w-full max-w-[420px] flex flex-col items-center shadow-2xl relative z-10">
+              // دیزاینە زێڕینە نوێیەکە ✨
+              <div className="flex flex-col items-center justify-center h-full p-4 w-full bg-black/85 relative">
+                <div className="bg-gradient-to-b from-[#3a0606] to-[#1a0202] border-[2.5px] border-[#FFD700] rounded-[2rem] p-6 sm:p-8 w-full max-w-[420px] flex flex-col items-center shadow-[0_0_35px_rgba(255,215,0,0.25)] relative z-10">
                   
-                  {/* ئایکۆنی خەڵاتە زێڕینەکە */}
-                  <div className="mb-4 text-[#d4af37] drop-shadow-[0_0_10px_rgba(212,175,55,0.5)]">
-                    <FaAward size={64} />
+                  {/* ئایکۆنی خەڵاتە زێڕینە درەوشاوەکە */}
+                  <div className="mb-4 text-[#FFD700] drop-shadow-[0_0_18px_rgba(255,215,0,0.9)]">
+                    <FaAward size={75} />
                   </div>
 
-                  {/* دەقە داواکراوەکە */}
-                  <h2 className="text-white text-xl sm:text-2xl font-bold mb-3 text-center leading-relaxed">
+                  <h2 className="text-white text-xl sm:text-2xl font-bold mb-3 text-center leading-relaxed drop-shadow-md">
                     بۆ بینی ئەم فلمە تکایە سەرەتا تکتێکی سینەما بکڕە
                   </h2>
                   
-                  <p className="text-[#a0a0a0] text-xs sm:text-sm mb-6 text-center">
+                  <p className="text-gray-400 text-xs sm:text-sm mb-6 text-center">
                     VIP تەنها خاوەن تکتەکان دەتوانن سەیری ناوەڕۆکی بکەن.
                   </p>
 
-                  {/* بۆکسی داخڵکردنی کلیل */}
                   <div className="w-full mb-4">
                     <input
                       type="text"
                       value={keyInput}
                       onChange={(e) => setKeyInput(e.target.value)}
                       placeholder="...کلیلەکە لێرە بنووسە"
-                      className="w-full bg-[#2a0404] border border-[#7a1212] text-white placeholder-gray-500 p-4 rounded-xl focus:outline-none focus:border-[#d4af37] text-right text-sm transition"
+                      className="w-full bg-[#170202] border border-[#8a1414] text-[#FFD700] placeholder-gray-500 p-4 rounded-xl focus:outline-none focus:border-[#FFD700] focus:ring-1 focus:ring-[#FFD700] text-right text-sm transition shadow-inner"
                       dir="rtl"
                     />
                   </div>
 
-                  {errorMsg && <p className="text-red-400 text-sm mb-4 text-center font-medium">{errorMsg}</p>}
+                  {errorMsg && <p className="text-red-400 text-sm mb-4 text-center font-medium bg-red-900/30 py-2 px-3 rounded-lg w-full border border-red-800/50">{errorMsg}</p>}
 
-                  {/* دوگمەی سەوز بۆ چالاککردن */}
+                  {/* دوگمەی سەوزە درەوشاوەکە */}
                   <button
                     onClick={verifyVipKey}
                     disabled={isLoadingVip}
-                    className="w-full bg-[#2f855a] hover:bg-[#276749] text-white font-bold py-3.5 rounded-xl mb-3 transition disabled:opacity-50 flex items-center justify-center gap-2"
+                    className="w-full bg-gradient-to-r from-[#22c55e] to-[#15803d] hover:from-[#16a34a] hover:to-[#14532d] text-white font-bold py-3.5 rounded-xl mb-3 transition disabled:opacity-50 flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(34,197,94,0.35)]"
                   >
                     {isLoadingVip ? (
                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                     ) : (
-                      <span>✨ چالاککردنی کلیل</span>
+                      <span className="text-lg">✨ چالاککردنی کلیل</span>
                     )}
                   </button>
 
-                  {/* دوگمەی زەرد بۆ تێلیگرام */}
+                  {/* دوگمەی زەردە زێڕینەکە */}
                   <a
                     href="https://t.me/sarkoakram"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full bg-[#ecc94b] hover:bg-[#d69e2e] text-black font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 transition mb-4"
+                    className="w-full bg-gradient-to-r from-[#FDE047] via-[#EAB308] to-[#CA8A04] hover:brightness-110 text-black font-extrabold py-3.5 rounded-xl flex items-center justify-center gap-2 transition mb-4 shadow-[0_0_20px_rgba(234,179,8,0.5)]"
                   >
-                    <span>داواکردنی کلیل (تێلیگرام) ➤</span>
+                    <span className="text-lg">داواکردنی کلیل (تێلیگرام) ➤</span>
                   </a>
 
-                  {/* دوگمەی داخستن */}
-                  <button onClick={closeModal} className="text-gray-400 hover:text-white text-sm transition mt-2">
+                  <button onClick={closeModal} className="text-gray-400 hover:text-white text-sm transition mt-1 font-medium">
                     داخستن
                   </button>
                 </div>
