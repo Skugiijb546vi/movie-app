@@ -48,8 +48,7 @@ const Catalog = () => {
   }, [data, isFetching, isLoading, page]);
 
   // لێرەدا فلتەرکردن و پێچەوانەکردنەوەی فیلمەکان دەکەین
-  const filteredAndSortedShows = [...shows]
-    .reverse() // ئەمە لیستەکە بەتەواوی پێچەوانە دەکاتەوە بۆ ئەوەی تازەترین بێتە سەرەوە
+  const filteredAndSortedShows = shows
     .filter((movie) => {
       // فلتەری ساڵ
       if (filterYear !== "All") {
@@ -71,7 +70,9 @@ const Catalog = () => {
       }
 
       return true;
-    });
+    })
+    // ئەم ڕیزە وادەکات ئایدییە گەورەکان (واتە تازەترینەکان) بێنە سەرەوە
+    .sort((a, b) => b.id - a.id);
 
   return (
     <>
@@ -114,7 +115,7 @@ const Catalog = () => {
           <SkelatonLoader isMoviesSliderLoader={false} />
         ) : (
           <div className="flex flex-wrap xs:gap-4 gap-[14px] justify-center">
-            {/* لێرەدا فلتەرکراوەکان بەکاردەهێنین */}
+            {/* لێرەدا فلتەرکراوەکان بەکاردەهێنین لەبری shows */}
             {filteredAndSortedShows?.map((movie) => (
               <div
                 key={movie.id}
@@ -124,7 +125,7 @@ const Catalog = () => {
               </div>
             ))}
             
-            {/* ئەگەر هیچ فیلمێک نەدۆزرایەوە */}
+            {/* ئەگەر هیچ فیلمێک نەدۆزرایەوە بەو فلتەرە */}
             {filteredAndSortedShows.length === 0 && (
               <div className="w-full text-center py-10 dark:text-gray-400 text-gray-600 font-nunito">
                 هیچ فیلمێک بەم تایبەتمەندییانە نەدۆزرایەوە!
