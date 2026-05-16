@@ -64,6 +64,9 @@ const Section: FC<SectionProps> = ({
     theme === "Dark" ? "view-all-btn--dark" : "view-all-btn--light"
   );
 
+  // لێرەدا ڕیزبەندییەکەمان پێچەوانە کردەوە بۆ ئەوەی فیلمە تازەکان بێنە سەرەوە
+  const reversedMovies = [...data.results].reverse().slice(0, 10);
+
   return (
     <section className={sectionStyle} ref={ref}>
       <div className="flex flex-row justify-between items-center mb-[22.75px]">
@@ -73,7 +76,7 @@ const Section: FC<SectionProps> = ({
         </div>
         {!showSimilarShows && (
           <Link to={`/${category}?type=${type}`} className={linkStyle}>
-            View all
+            هەمووی ببینە
           </Link>
         )}
       </div>
@@ -84,7 +87,7 @@ const Section: FC<SectionProps> = ({
           <Error error={String(errorMessage)} className="h-full text-[18px]" />
         ) : (
           <MoviesSlides
-            movies={data.results.slice(0, 10)}
+            movies={reversedMovies}
             category={category}
           />
         )}
