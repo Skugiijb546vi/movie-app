@@ -8,6 +8,39 @@ const TMDB_API_KEY = "7ff77f551b7a1db3b68d9a5a991e7cd5";
 const FIREBASE_BASE_URL = "https://sebartv-efccb-default-rtdb.firebaseio.com/np";
 const FIREBASE_AUTH = "6qa7EEbgBzwXp3pu6L1eSy3AZLsKtLPSc8Xtd5Eo";
 
+// === Encryption Helpers for Link and Subtitle Security ===
+const SECRET_PASSPHRASE = "SebarTvSecretKey2026_Secure_Token!";
+
+function safeBtoa(str) {
+  if (typeof btoa === "function") return btoa(str);
+  return Buffer.from(str, "binary").toString("base64");
+}
+
+function generateSalt(length = 8) {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  let result = "";
+  for (let i = 0; i < length; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}
+
+function encrypt(text) {
+  if (!text) return "";
+  const salt = generateSalt(8);
+  const fullKey = SECRET_PASSPHRASE + salt;
+  
+  let result = "";
+  for (let i = 0; i < text.length; i++) {
+    const charCode = text.charCodeAt(i);
+    const keyChar = fullKey.charCodeAt(i % fullKey.length);
+    const encryptedChar = charCode ^ keyChar;
+    result += encryptedChar.toString(16).padStart(4, "0");
+  }
+  return safeBtoa(salt + ":" + result);
+}
+// ========================================================
+
 // Helper: Translate text to Kurdish Sorani using Google Translate's free API
 async function translateToKurdish(text) {
   if (!text) return "";
@@ -315,6 +348,10 @@ async function runBot() {
       // بەکارهێنانی سێرڤەرێکی باشتر کە ڕیکلامی کەمترە 
       let directStreamUrl = `https://vidsrc.cc/v2/embed/${item.type}/${item.id}`;
 
+      // Encrypt sensitive links and subtitles before pushing to database
+      const encryptedUrl = encrypt(directStreamUrl);
+      const encryptedSubtitle = kurdishVttBase64 ? encrypt(kurdishVttBase64) : "";
+
       const newItem = {
         id: item.id,
         title: item.title,
@@ -324,9 +361,9 @@ async function runBot() {
         imdb: item.vote_average,
         badge_text: "FREE",
         type: item.type,
-        url: directStreamUrl,
+        url: encryptedUrl,
         hasSubtitle: kurdishVttBase64 ? true : false,
-        subtitleKurdish: kurdishVttBase64,
+        subtitleKurdish: encryptedSubtitle,
         timestamp: Date.now()
       };
 
