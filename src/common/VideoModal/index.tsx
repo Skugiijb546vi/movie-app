@@ -12,6 +12,9 @@ import { useOnClickOutside } from "@/hooks/useOnClickOutside";
 import { useMotion } from "@/hooks/useMotion";
 import { useOnKeyPress } from "@/hooks/useOnKeyPress";
 
+// هاوردەکردنی hls.js بۆ پشتگیریکردنی لایڤ لەسەر هەموو وێبگەڕەکان
+import Hls from "hls.js";
+
 const firebaseConfig = {
   apiKey: "AIzaSyAn-U4aTP5LwHf9cIOdPAXp4fCMzYyrDV8",
   authDomain: "sebartv-efccb.firebaseapp.com",
@@ -59,10 +62,14 @@ const VideoModal = () => {
   const [subColor, setSubColor] = useState("#ffffff");
   const [subBg, setSubBg] = useState("rgba(0,0,0,0.75)");
 
-  // هێنانە سەرەوەی لینکەکان بۆ ئەوەی دوگمەی کوژانەوەکە بیبینێت
+  // 🛠️ لێرەدا کێشەی وۆرکەرەکەمان چارەسەر کردووە بەبێ تێکدانی لینکەکانی ترت
   const rawUrl = fbData?.url || fbData?.video_url || "";
   const WORKER_URL = "https://videoproxy.sarkotiktok36.workers.dev/?url=";
-  const videoUrl = rawUrl ? `${WORKER_URL}${encodeURIComponent(rawUrl)}` : "";
+  
+  const videoUrl = rawUrl 
+    ? (rawUrl.includes(".m3u8") ? rawUrl : `${WORKER_URL}${encodeURIComponent(rawUrl)}`)
+    : "";
+
   const posterImage = fbData?.image || movieData?.poster_path || "";
 
   const { ref: modalRef } = useOnClickOutside({
@@ -80,14 +87,37 @@ const VideoModal = () => {
     enable: isModalOpen
   });
 
-  // ⚡ دوگمەی کوژانەوە (Kill Switch): وا دەکات هەرگیز ئینتەرنێت گیر نەخوات ⚡
+  // ⚡ دوگمەی کوژانەوە (Kill Switch) + بەڕێوببردنی HLS لە پشتەوە
   useEffect(() => {
     const videoEl = videoRef.current;
+    let hls;
+
+    if (videoEl && videoUrl) {
+      if (videoUrl.includes(".m3u8")) {
+        if (Hls.isSupported()) {
+          hls = new Hls({ maxMaxBufferLength: 30 });
+          hls.loadSource(videoUrl);
+          hls.attachMedia(videoEl);
+          hls.on(Hls.Events.MANIFEST_PARSED, () => {
+            if (isPlaying && isModalOpen) videoEl.play().catch(() => {});
+          });
+        } else if (videoEl.canPlayType("application/vnd.apple.mpegurl")) {
+          videoEl.src = videoUrl;
+        }
+      } else {
+        // ئەگەر لینکی ئاسایی بوو وەک MP4، ڕاستەوخۆ src بەکاردێنێت وەک پێشتر
+        videoEl.src = videoUrl;
+      }
+    }
+
     return () => {
+      if (hls) {
+        hls.destroy();
+      }
       if (videoEl) {
         videoEl.pause(); 
-        videoEl.removeAttribute("src"); // ڕاستەوخۆ لینکەکە لێ دەکاتەوە
-        videoEl.load(); // فەرمان بە براوزەر دەکات داونلۆدەکە بوەستێنێت
+        videoEl.removeAttribute("src"); 
+        videoEl.load(); 
       }
     };
   }, [videoUrl, isModalOpen]);
@@ -158,7 +188,7 @@ const VideoModal = () => {
     e.stopPropagation();
     if (videoRef.current) {
       if (isPlaying) videoRef.current.pause();
-      else videoRef.current.play();
+      else videoRef.current.play().catch(() => {});
       setIsPlaying(!isPlaying);
     }
   };
@@ -296,10 +326,10 @@ const VideoModal = () => {
                 className="w-full h-full relative group bg-black"
                 onClick={handleToggleControls}
               >
+                {/* پلەیەرەکە وەک خۆیەتی و هیچ گۆڕانکاریەکی تێدا نەکراوە بۆ ئەوەی شێوازەکەی تێک نەچێت */}
                 <video
                   ref={videoRef}
                   key={videoUrl}
-                  src={videoUrl}
                   autoPlay
                   playsInline
                   controlsList="nodownload" 
